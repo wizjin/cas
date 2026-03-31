@@ -147,7 +147,8 @@ if(CAS_CLANG_TIDY)
 		endforeach()
 
 		add_custom_target(cas_tidy
-			COMMAND ${CAS_CLANG_TIDY} -p ${CMAKE_BINARY_DIR} ${CAS_TIDY_ARGS}
+			COMMAND bash -c "\"$@\" 2> >(grep -Ev '^[0-9]+ warnings generated\\.$' >&2)"
+				_ ${CAS_CLANG_TIDY} --quiet -p ${CMAKE_BINARY_DIR} ${CAS_TIDY_ARGS}
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			VERBATIM
 		)

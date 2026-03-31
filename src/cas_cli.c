@@ -12,8 +12,6 @@ typedef struct {
 } cas_cli_command_t;
 
 struct cas_cli_context {
-	const cas_cli_command_t *commands;
-	size_t command_count;
 	FILE *out;
 	FILE *err;
 };
@@ -28,10 +26,8 @@ static const cas_cli_command_t cas_cli_commands[] = {
 
 static const cas_cli_command_t *cas_cli_find_command(const char *name)
 {
-	size_t index;
-
-	for(index = 0; index < sizeof(cas_cli_commands) / sizeof(cas_cli_commands[0]); index++) {
-		if(strcmp(cas_cli_commands[index].name, name) == 0) {
+	for (size_t index = 0; index < sizeof(cas_cli_commands) / sizeof(cas_cli_commands[0]); index++) {
+		if (strcmp(cas_cli_commands[index].name, name) == 0) {
 			return &cas_cli_commands[index];
 		}
 	}
@@ -41,13 +37,10 @@ static const cas_cli_command_t *cas_cli_find_command(const char *name)
 
 static int cas_cli_run_help(const cas_cli_context_t *context)
 {
-	size_t index;
-
-	fprintf(context->out, "Usage: cas <command>\n\n");
-	fprintf(context->out, "Commands:\n");
-	for(index = 0; index < context->command_count; index++) {
-		fprintf(context->out, "  %s\t%s\n", context->commands[index].name,
-			context->commands[index].description);
+	(void)fprintf(context->out, "Usage: cas <command>\n\n");
+	(void)fprintf(context->out, "Commands:\n");
+	for (size_t index = 0; index < sizeof(cas_cli_commands) / sizeof(cas_cli_commands[0]); index++) {
+		(void)fprintf(context->out, "  %s\t%s\n", cas_cli_commands[index].name, cas_cli_commands[index].description);
 	}
 
 	return 0;
@@ -55,29 +48,26 @@ static int cas_cli_run_help(const cas_cli_context_t *context)
 
 static int cas_cli_run_version(const cas_cli_context_t *context)
 {
-	fprintf(context->out, "%s\n", CAS_VERSION);
+	(void)fprintf(context->out, "%s\n", CAS_VERSION);
 
 	return 0;
 }
 
 int cas_cli_run(int argc, char **argv, FILE *out, FILE *err)
 {
-	cas_cli_context_t context;
-	const cas_cli_command_t *command;
+	cas_cli_context_t context = {
+		.out = out,
+		.err = err,
+	};
 
-	context.commands = cas_cli_commands;
-	context.command_count = sizeof(cas_cli_commands) / sizeof(cas_cli_commands[0]);
-	context.out = out;
-	context.err = err;
-
-	if(argc < 2) {
+	if (argc < 2) {
 		return cas_cli_run_help(&context);
 	}
 
-	command = cas_cli_find_command(argv[1]);
-	if(command == NULL) {
-		fprintf(context.err, "Unknown command: %s\n", argv[1]);
-		fprintf(context.err, "Run 'cas help' to see available commands.\n");
+	const cas_cli_command_t *command = cas_cli_find_command(argv[1]);
+	if (command == NULL) {
+		(void)fprintf(context.err, "Unknown command: %s\n", argv[1]);
+		(void)fprintf(context.err, "Run 'cas help' to see available commands.\n");
 		return 1;
 	}
 

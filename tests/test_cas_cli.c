@@ -22,7 +22,7 @@ static char *cas_test_capture_command(int argc, char **argv, int *result, int us
 	out_stream = open_memstream(&buffer, &size);
 	assert_non_null(out_stream);
 
-	if(use_error_stream) {
+	if (use_error_stream) {
 		err_stream = out_stream;
 	} else {
 		err_stream = tmpfile();
@@ -32,7 +32,7 @@ static char *cas_test_capture_command(int argc, char **argv, int *result, int us
 	*result = cas_cli_run(argc, argv, out_stream, err_stream);
 
 	assert_int_equal(fflush(out_stream), 0);
-	if(!use_error_stream) {
+	if (!use_error_stream) {
 		assert_int_equal(fclose(err_stream), 0);
 	}
 	assert_int_equal(fclose(out_stream), 0);
