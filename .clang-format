@@ -1,0 +1,17 @@
+BasedOnStyle: LLVM
+ColumnLimit: 120
+UseTab: Always
+TabWidth: 4
+IndentWidth: 4
+InsertBraces: true
+SortIncludes: false
+SpaceBeforeParens: ControlStatements
+BreakBeforeBraces: Linux
+PointerAlignment: Right
+AlignOperands: Align
+AlignAfterOpenBracket: Align
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
+AllowShortLambdasOnASingleLine: All
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never

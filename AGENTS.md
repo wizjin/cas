@@ -1,0 +1,82 @@
+# AI Settings
+- Keep total input and output tokens under 250k.
+- Fully utilize context to avoid token exhaustion.
+
+## Communication
+- Always respond in Simplified Chinese.
+- Answer directly without pleasantries.
+
+## Execution
+- Read relevant files before making changes.
+- Ask when uncertain, don't guess.
+- Avoid unnecessary comments.
+
+## Security
+- Never commit secrets, keys, or credentials to repositories.
+- Never expose sensitive information in code or logs.
+
+## Extensibility
+- Rules below this section may be added, edited, or deleted.
+- This section and everything above it requires user confirmation to change.
+
+## Repository Role
+- `AGENTS.md` and files under `doc/` are for LLMs.
+- `README.md` is for humans only.
+- Keep LLM-facing documents short, explicit, and task-oriented.
+- Prefer updating, merging, or replacing existing content instead of appending new sections.
+
+## Document Layout
+- Start with `doc/index.md` to find task-specific documents.
+- Read only the minimum set of files required for the current task.
+- Keep one canonical source for each rule. Link to it instead of duplicating content.
+- Split documents when a file starts mixing unrelated concerns or becomes longer than needed for focused LLM use.
+
+## Language And Content
+- Write documentation, comments, logs, and commit messages in English.
+- Do not include sensitive information in documentation, comments, logs, commit messages, or code.
+- Do not include passwords, API keys, tokens, private endpoints, or absolute paths containing usernames.
+
+## Git Workflow
+- Use Git for source control.
+- Follow `Conventional Commits` for commit messages.
+- Do not rewrite history unless the user explicitly requests it.
+
+## Code Rules
+- Target the C17 standard.
+- Follow K&R formatting and keep code compatible with `clang-format`.
+- Use `clang-tidy` for static analysis.
+- Put public headers in `include/`.
+- Put internal headers in `src/`.
+- Use `CAS_` or `cas_` as the prefix for code files, functions, macros, and related symbols when applicable.
+- Prefer typedef aliases for structs instead of repeating raw `struct` names in usage sites.
+- Keep project configuration macros in `src/cas_config.h` when they are consumed by internal source files.
+- Avoid comments unless they prevent real ambiguity.
+- Prefer self-explanatory names over explanatory comments.
+- Design interfaces and modules with single responsibility, low coupling, high cohesion, open/closed principle, and Law of Demeter.
+
+## Build And Dependency Rules
+- Use CMake.
+- Keep build configuration centralized in the root `CMakeLists.txt`.
+- Use the root `Makefile` as the public entrypoint for common developer tasks.
+- Support `make clean`, `make build`, `make format`, `make tidy`, `make test`, `make coverage`, and `make release`.
+- Apply feature-test macros through CMake `target_compile_definitions` with the narrowest target scope possible.
+- Keep Make output quiet. Print only essential status lines with `echo`.
+- Do not run Make in parallel.
+- Keep all build artifacts and intermediate files under `build/`.
+- Put release outputs under `build/release/`.
+- Prefer system libraries first. Use CMake `FetchContent` only when a required dependency is unavailable, and store fetched sources under `libs/`.
+
+## Quality Rules
+- Restrict static analysis scope to `src/` and `include/`.
+- Ignore tests and third-party code during static analysis.
+- Use `cmocka` for unit tests.
+- Name unit test source files as `tests/test_<module>.c`.
+- Prefer mocks over reliance on external environments.
+- Treat `100%` coverage as the target for unit-tested code.
+
+## Navigation
+- Read `doc/index.md` first for documentation routing.
+- Read `doc/build.md` for build and dependency workflow.
+- Read `doc/style.md` for code style and naming rules.
+- Read `doc/testing.md` for testing and analysis expectations.
+- Read `doc/dependencies.md` for third-party dependency policy.
