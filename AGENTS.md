@@ -21,7 +21,7 @@
 
 ## Repository Role
 - `AGENTS.md` and files under `doc/` are for LLMs.
-- `README.md` is for humans only.
+- `README.md` is for humans only. Keep it concise and user-oriented. Focus on what CAS is, how to install or build it, and how to use it. Avoid LLM-facing, repository-internal, or overly detailed developer workflow content.
 - Keep LLM-facing documents short, explicit, and task-oriented.
 - Prefer updating, merging, or replacing existing content instead of appending new sections.
 
@@ -64,7 +64,9 @@
 - Do not run Make in parallel.
 - Keep all build artifacts and intermediate files under `build/`.
 - Put release outputs under `build/release/`.
-- Prefer system libraries first. Use CMake `FetchContent` only when a required dependency is unavailable, and store fetched sources under `libs/`.
+- Use separate build directories for configurations that change instrumentation or dependency build state, such as coverage versus normal debug builds.
+- Prefer system libraries first. Use CMake `FetchContent` only when a required dependency is unavailable, store fetched sources under `libs/`, and keep `FetchContent` build and subbuild state under `build/`.
+- Suppress third-party CMake warnings from top-level build entrypoints instead of patching fetched sources.
 
 ## Quality Rules
 - Restrict static analysis scope to `src/` and `include/`.
@@ -72,6 +74,7 @@
 - Use `cmocka` for unit tests.
 - Name unit test source files as `tests/test_<module>.c`.
 - Prefer mocks over reliance on external environments.
+- Move reusable helper logic into focused utility modules instead of keeping module-specific copies of generic helpers.
 - Treat `100%` coverage as the target for unit-tested code.
 
 ## Navigation

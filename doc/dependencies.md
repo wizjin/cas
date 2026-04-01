@@ -17,3 +17,4 @@ Back to `doc/index.md`.
 - Manage dependency configuration from the root `CMakeLists.txt`.
 - Keep dependency usage explicit and minimal.
 - Avoid introducing dependencies that are not required by a clear project need.
+- Prefer optional system libraries with graceful fallback when the feature is not strictly required.

@@ -5,7 +5,9 @@ Back to `doc/index.md`.
 ## Commands
 
 - `cas help` prints command usage and the available subcommands.
-- `cas version` prints the project version string.
+- `cas --help` prints the same help text as `cas help`.
+- `cas --version` prints the project version string.
+- `cas version` prints detailed build information.
 - Running `cas` without a subcommand prints the same help text.
 
 ## Implementation
