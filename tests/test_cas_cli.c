@@ -169,11 +169,9 @@ static void cas_cli_version_subcommand_shows_build_details(void **state)
 	assert_non_null(strstr(output, "Built:        " CAS_BUILD_TIMESTAMP));
 	assert_non_null(strstr(output, "OS/Arch:      " CAS_TARGET_OS "/" CAS_TARGET_ARCH));
 	assert_non_null(strstr(output, "Dependencies:\n"));
-	assert_true(strstr(output, "  - none") != NULL ||
-		    strstr(output, "  - jemalloc") != NULL ||
-		    strstr(output, "  - libuv") != NULL ||
-		    strstr(output, "  - llhttp") != NULL ||
-		    strstr(output, "  - cJSON") != NULL);
+	assert_true(strstr(output, "  - none") != NULL || strstr(output, "  - jemalloc") != NULL ||
+				strstr(output, "  - libuv") != NULL || strstr(output, "  - llhttp") != NULL ||
+				strstr(output, "  - cJSON") != NULL);
 
 	free(output);
 }
@@ -250,9 +248,8 @@ static void cas_version_collect_dependencies_limits_results_to_capacity(void **s
 
 	(void)state;
 
-	maps_file = cas_test_open_maps_file(
-		"7f00-7f01 r--p 00000000 00:00 0 /usr/lib/libjemalloc.so.2\n"
-		"7f01-7f02 r--p 00000000 00:00 0 /usr/lib/libuv.so.1\n");
+	maps_file = cas_test_open_maps_file("7f00-7f01 r--p 00000000 00:00 0 /usr/lib/libjemalloc.so.2\n"
+										"7f01-7f02 r--p 00000000 00:00 0 /usr/lib/libuv.so.1\n");
 
 	assert_int_equal(cas_version_collect_dependencies_from_file(maps_file, dependencies, 1), 1);
 	assert_string_equal(dependencies[0].name, "jemalloc");

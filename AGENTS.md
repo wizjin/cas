@@ -1,8 +1,5 @@
-# AI Settings
-- Keep total input and output tokens under 250k.
-- Fully utilize context to avoid token exhaustion.
-
 ## Communication
+- Fully utilize context to avoid token exhaustion.
 - Always respond in Simplified Chinese.
 - Answer directly without pleasantries.
 
@@ -48,10 +45,12 @@
 - Put public headers in `include/`.
 - Put internal headers in `src/`.
 - Use `CAS_` or `cas_` as the prefix for code files, functions, macros, and related symbols when applicable.
-- Prefer typedef aliases for structs instead of repeating raw `struct` names in usage sites.
+- Prefer struct typedef aliases, but do not hide pointer semantics in them. Use explicit `*` in APIs.
 - Keep project configuration macros in `src/cas_config.h` when they are consumed by internal source files.
-- Avoid comments unless they prevent real ambiguity.
-- Prefer self-explanatory names over explanatory comments.
+- Prefer self-explanatory names and avoid comments unless they prevent real ambiguity.
+- Prefer short, conventional C local variable names only when they remain self-explanatory in context.
+- Prefer declaration with initialization at first use. Keep split declaration and assignment only when required by C APIs such as `va_list`.
+- Inline trivial one-use conditions instead of creating tiny helper functions that obscure the main path.
 - Design interfaces and modules with single responsibility, low coupling, high cohesion, open/closed principle, and Law of Demeter.
 
 ## Build And Dependency Rules
@@ -59,7 +58,7 @@
 - Keep build configuration centralized in the root `CMakeLists.txt`.
 - Use the root `Makefile` as the public entrypoint for common developer tasks.
 - Support `make clean`, `make build`, `make format`, `make tidy`, `make test`, `make coverage`, and `make release`.
-- Apply feature-test macros through CMake `target_compile_definitions` with the narrowest target scope possible.
+- Apply feature-test macros such as `_POSIX_C_SOURCE` through CMake `target_compile_definitions` with the narrowest target scope possible.
 - Keep Make output quiet. Print only essential status lines with `echo`.
 - Do not run Make in parallel.
 - Keep all build artifacts and intermediate files under `build/`.
@@ -74,8 +73,11 @@
 - Use `cmocka` for unit tests.
 - Name unit test source files as `tests/test_<module>.c`.
 - Prefer mocks over reliance on external environments.
+- Prefer test-only build configuration or test translation units over exposing production-only test hooks when covering internal branches.
 - Move reusable helper logic into focused utility modules instead of keeping module-specific copies of generic helpers.
 - Treat `100%` coverage as the target for unit-tested code.
+- Re-run tests after changes to locking, object lifetime, or other concurrency-sensitive control flow.
+- Keep thread-safety scope explicit. Protect shared mutation with simple locking, and do not infer thread-safe destruction or lifetime management unless the requirement states it.
 
 ## Navigation
 - Read `doc/index.md` first for documentation routing.

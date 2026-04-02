@@ -38,9 +38,7 @@ static cas_version_maps_file_open_fn_t cas_version_maps_file_open_fn = cas_versi
 
 const char *cas_version_dependency_basename(const char *path)
 {
-	const char *slash;
-
-	slash = strrchr(path, '/');
+	const char *slash = strrchr(path, '/');
 	if (slash == NULL) {
 		return path;
 	}
@@ -50,79 +48,69 @@ const char *cas_version_dependency_basename(const char *path)
 
 void cas_version_extract_dependency_version(char *version, size_t version_size, const char *path)
 {
-	const char *basename;
-	const char *marker;
-
-	basename = cas_version_dependency_basename(path);
-	marker = strstr(basename, ".so.");
-	if (marker == NULL || marker[4] == '\0') {
+	const char *base = cas_version_dependency_basename(path);
+	const char *so = strstr(base, ".so.");
+	if (so == NULL || so[4] == '\0') {
 		cas_utils_copy_string(version, version_size, "unknown");
 		return;
 	}
 
-	cas_utils_copy_string(version, version_size, marker + 4);
+	cas_utils_copy_string(version, version_size, so + 4);
 }
 
 static int cas_version_dependency_matches(const char *path, size_t index)
 {
-	const char *basename;
-
-	basename = cas_version_dependency_basename(path);
-	return strstr(basename, cas_version_dependency_specs[index].match) != NULL;
+	const char *base = cas_version_dependency_basename(path);
+	return strstr(base, cas_version_dependency_specs[index].match) != NULL;
 }
 
 static void cas_version_scan_dependencies(FILE *maps_file, cas_version_dependency_scan_context_t *context)
 {
 	char line[PATH_MAX * 2];
-	size_t index;
 
 	while (fgets(line, sizeof(line), maps_file) != NULL) {
-		char *path;
-		char *newline;
-
-		path = strchr(line, '/');
+		char *path = strchr(line, '/');
 		if (path == NULL) {
 			continue;
 		}
 
-		newline = strchr(path, '\n');
-		if (newline != NULL) {
-			*newline = '\0';
+		char *nl = strchr(path, '\n');
+		if (nl != NULL) {
+			*nl = '\0';
 		}
 
-		for (index = 0; index < sizeof(cas_version_dependency_specs) / sizeof(cas_version_dependency_specs[0]); index++) {
-			if (!context->found[index] && cas_version_dependency_matches(path, index)) {
-				cas_utils_copy_string(context->paths[index], sizeof(context->paths[index]), path);
-				context->found[index] = 1;
+		for (size_t i = 0; i < sizeof(cas_version_dependency_specs) / sizeof(cas_version_dependency_specs[0]);
+			 i++) {
+			if (!context->found[i] && cas_version_dependency_matches(path, i)) {
+				cas_utils_copy_string(context->paths[i], sizeof(context->paths[i]), path);
+				context->found[i] = 1;
 				break;
 			}
 		}
 	}
 }
 
-size_t cas_version_collect_dependencies_from_file(FILE *maps_file, cas_version_dependency_t *dependencies, size_t capacity)
+size_t cas_version_collect_dependencies_from_file(FILE *maps_file, cas_version_dependency_t *dependencies,
+												  size_t capacity)
 {
-	cas_version_dependency_scan_context_t context;
-	size_t count;
-	size_t index;
-
 	if (maps_file == NULL || dependencies == NULL || capacity == 0) {
 		return 0;
 	}
 
-	(void)memset(&context, 0, sizeof(context));
-	cas_version_scan_dependencies(maps_file, &context);
+	cas_version_dependency_scan_context_t ctx;
+	(void)memset(&ctx, 0, sizeof(ctx));
+	cas_version_scan_dependencies(maps_file, &ctx);
 
-	count = 0;
-	for (index = 0; index < sizeof(cas_version_dependency_specs) / sizeof(cas_version_dependency_specs[0]); index++) {
-		if (!context.found[index] || count >= capacity) {
+	size_t count = 0;
+	for (size_t i = 0; i < sizeof(cas_version_dependency_specs) / sizeof(cas_version_dependency_specs[0]); i++) {
+		if (!ctx.found[i] || count >= capacity) {
 			continue;
 		}
 
-		cas_utils_copy_string(
-			dependencies[count].name, sizeof(dependencies[count].name), cas_version_dependency_specs[index].name);
-		cas_version_extract_dependency_version(
-			dependencies[count].version, sizeof(dependencies[count].version), context.paths[index]);
+		cas_utils_copy_string(dependencies[count].name, sizeof(dependencies[count].name),
+							  cas_version_dependency_specs[i].name);
+		cas_version_extract_dependency_version(dependencies[count].version, sizeof(dependencies[count].version),
+											   ctx.paths[i]);
 		count++;
 	}
 
@@ -148,10 +136,7 @@ int cas_version_run_short(FILE *out)
 
 int cas_version_run_details(FILE *out)
 {
-	cas_version_dependency_t dependencies[4];
-	size_t dependency_count;
-	size_t index;
-	FILE *maps_file;
+	cas_version_dependency_t deps[4];
 
 	(void)fprintf(out, "Version:      %s\n", CAS_VERSION);
 	(void)fprintf(out, "Git Commit:   %s\n", CAS_GIT_SHORT_COMMIT);
@@ -159,22 +144,22 @@ int cas_version_run_details(FILE *out)
 	(void)fprintf(out, "OS/Arch:      %s/%s\n", CAS_TARGET_OS, CAS_TARGET_ARCH);
 	(void)fprintf(out, "Dependencies:\n");
 
-	maps_file = cas_version_maps_file_open_fn("/proc/self/maps", "r");
-	if (maps_file == NULL) {
-		dependency_count = 0;
+	FILE *fp = cas_version_maps_file_open_fn("/proc/self/maps", "r");
+	size_t count;
+	if (fp == NULL) {
+		count = 0;
 	} else {
-		dependency_count = cas_version_collect_dependencies_from_file(
-			maps_file, dependencies, sizeof(dependencies) / sizeof(dependencies[0]));
-		(void)fclose(maps_file);
+		count = cas_version_collect_dependencies_from_file(fp, deps, sizeof(deps) / sizeof(deps[0]));
+		(void)fclose(fp);
 	}
 
-	if (dependency_count == 0) {
+	if (count == 0) {
 		(void)fprintf(out, "  - none\n");
 		return 0;
 	}
 
-	for (index = 0; index < dependency_count; index++) {
-		(void)fprintf(out, "  - %-8s %s\n", dependencies[index].name, dependencies[index].version);
+	for (size_t i = 0; i < count; i++) {
+		(void)fprintf(out, "  - %-8s %s\n", deps[i].name, deps[i].version);
 	}
 
 	return 0;

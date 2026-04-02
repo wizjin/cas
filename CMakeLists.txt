@@ -4,6 +4,7 @@ project(CAS VERSION 0.1.0 LANGUAGES C)
 
 include(CTest)
 include(FetchContent)
+find_package(Threads REQUIRED)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -243,6 +244,7 @@ target_compile_features(cas_project_options INTERFACE c_std_17)
 target_compile_options(cas_project_options INTERFACE ${CAS_WARNING_FLAGS})
 target_compile_options(cas_project_options INTERFACE ${CAS_PATH_REMAP_FLAGS})
 target_compile_definitions(cas_project_options INTERFACE
+	_POSIX_C_SOURCE=200809L
 	CAS_VERSION="${PROJECT_VERSION}"
 	CAS_GIT_SHORT_COMMIT="${CAS_GIT_SHORT_COMMIT}"
 	CAS_BUILD_TIMESTAMP="${CAS_BUILD_TIMESTAMP_VALUE}"
@@ -250,6 +252,7 @@ target_compile_definitions(cas_project_options INTERFACE
 	CAS_TARGET_ARCH="${CAS_TARGET_ARCH_VALUE}"
 )
 target_link_libraries(cas_project_options INTERFACE ${CMAKE_DL_LIBS})
+target_link_libraries(cas_project_options INTERFACE Threads::Threads)
 
 target_include_directories(cas_project_options INTERFACE "${CAS_SRC_DIR}")
 
@@ -297,15 +300,30 @@ if(CAS_ENABLE_TESTS)
 		find_package(cmocka QUIET)
 
 		if(cmocka_FOUND)
-			add_executable(cas_tests ${CAS_TEST_FILES})
-			target_compile_definitions(cas_tests PRIVATE _GNU_SOURCE)
-			target_link_libraries(cas_tests PRIVATE cas_project_options cmocka::cmocka)
+			foreach(CAS_TEST_FILE IN LISTS CAS_TEST_FILES)
+				get_filename_component(CAS_TEST_NAME "${CAS_TEST_FILE}" NAME_WE)
+				add_executable(${CAS_TEST_NAME} ${CAS_TEST_FILE})
+				target_compile_definitions(${CAS_TEST_NAME} PRIVATE _GNU_SOURCE)
+				target_link_libraries(${CAS_TEST_NAME} PRIVATE cas_project_options cmocka::cmocka)
 
-			if(TARGET cas_core)
-				target_link_libraries(cas_tests PRIVATE cas_core)
-			endif()
+				if(TARGET cas_core AND NOT ${CAS_TEST_NAME} MATCHES "^test_cas_log")
+					target_link_libraries(${CAS_TEST_NAME} PRIVATE cas_core)
+				endif()
 
-			add_test(NAME cas_tests COMMAND cas_tests)
+				if(${CAS_TEST_NAME} STREQUAL "test_cas_log")
+					target_link_options(${CAS_TEST_NAME} PRIVATE
+						"LINKER:--wrap=malloc"
+						"LINKER:--wrap=pthread_mutex_init"
+						"LINKER:--wrap=pthread_mutex_lock"
+						"LINKER:--wrap=clock_gettime"
+						"LINKER:--wrap=localtime_r"
+						"LINKER:--wrap=strftime"
+						"LINKER:--wrap=vsnprintf"
+					)
+				endif()
+
+				add_test(NAME ${CAS_TEST_NAME} COMMAND ${CAS_TEST_NAME})
+			endforeach()
 		else()
 			message(WARNING "cmocka not found; tests are disabled.")
 		endif()
@@ -320,6 +338,7 @@ if(CAS_CLANG_FORMAT)
 	if(CAS_FORMAT_FILES)
 		add_custom_target(cas_format
 			COMMAND ${CAS_CLANG_FORMAT} -i ${CAS_FORMAT_FILES}
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			VERBATIM
 		)
 	else()
@@ -374,6 +393,7 @@ if(CAS_GCOVR AND CAS_ENABLE_COVERAGE)
 			--filter ${CAS_SRC_DIR}
 			--filter ${CAS_INCLUDE_DIR}
 			--exclude ${CAS_TEST_DIR}
+			--gcov-ignore-parse-errors negative_hits.warn
 			--print-summary
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 		VERBATIM

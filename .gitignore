@@ -52,3 +52,5 @@ Testing
 build/
 libs/
 .codex
+*.gcov
+
