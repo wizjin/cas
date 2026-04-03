@@ -125,8 +125,7 @@ void cas_log_release(cas_log_t **log)
 		return;
 	}
 
-	cas_log_category_t *category = (*log)->categories;
-	while (category != NULL) {
+	for (cas_log_category_t *category = (*log)->categories; category != NULL;) {
 		cas_log_category_t *next = category->next;
 		cas_free(category);
 		category = next;

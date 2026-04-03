@@ -95,7 +95,7 @@ size_t cas_version_collect_deps(FILE *maps_file, cas_version_dependency_t *depen
 		return 0;
 	}
 
-	cas_version_dep_scan_ctx_t ctx;
+	cas_version_dep_scan_ctx_t ctx = {0};
 	(void)memset(&ctx, 0, sizeof(ctx));
 	cas_version_scan_dependencies(maps_file, &ctx);
 
@@ -140,11 +140,9 @@ int cas_version_run_details(FILE *out)
 	(void)fprintf(out, "OS/Arch:      %s/%s\n", CAS_TARGET_OS, CAS_TARGET_ARCH);
 	(void)fprintf(out, "Dependencies:\n");
 
+	size_t count = 0;
 	FILE *fp = cas_version_maps_file_open_fn("/proc/self/maps", "r");
-	size_t count;
-	if (fp == NULL) {
-		count = 0;
-	} else {
+	if (fp != NULL) {
 		count = cas_version_collect_deps(fp, deps, sizeof(deps) / sizeof(deps[0]));
 		(void)fclose(fp);
 	}

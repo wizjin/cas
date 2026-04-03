@@ -17,9 +17,14 @@ Back to `doc/index.md`.
 - Put public headers in `include/`.
 - Put internal headers in `src/`.
 - Do not hide pointer semantics in typedef aliases.
-- Prefer declaring local variables with initialization at first use. Keep split declaration and assignment only when required by C APIs such as `va_list`.
+- Prefer declaring local variables with initialization at first use.
+- Do not group local declarations at function entry.
+- Merge declaration and first assignment whenever possible. Keep split declaration and assignment only when required by C APIs such as `va_list`.
+- Treat a moved declaration as complete only when the declaration site is also the first meaningful assignment site. Do not claim a declaration was moved down if it still appears earlier with placeholder initialization such as `NULL`, `0`, or `false`.
+- When cleanup paths need a variable earlier than its first successful value, restructure the control flow or cleanup logic instead of keeping a placeholder-initialized declaration near the top of the function.
 - Place feature-test macros through CMake target definitions instead of source-file preprocessor blocks when possible.
 - Add a compiler-format attribute wrapper on printf-style variadic APIs so static analyzers can validate format and `va_list` usage.
+- Do not use `goto`.
 
 ## Naming
 

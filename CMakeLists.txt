@@ -166,6 +166,10 @@ function(cas_ensure_cjson_target)
 	cas_wrap_target_if_exists(cas_dep_cjson cjson)
 	cas_wrap_target_if_exists(cas_dep_cjson cJSON)
 
+	if(TARGET cas_dep_cjson AND EXISTS "${cas_cjson_source_dir}/cJSON.h")
+		target_include_directories(cas_dep_cjson INTERFACE "${cas_cjson_source_dir}")
+	endif()
+
 	if(NOT TARGET cas_dep_cjson)
 		message(FATAL_ERROR "Unable to configure cJSON target.")
 	endif()
@@ -268,18 +272,24 @@ if(JEMALLOC_FOUND)
 endif()
 
 if(CAS_LIBRARY_SOURCE_FILES)
-	add_library(cas_core STATIC ${CAS_LIBRARY_SOURCE_FILES} ${CAS_HEADER_FILES})
-	target_link_libraries(cas_core PUBLIC cas_project_options)
-	target_compile_definitions(cas_core PUBLIC _GNU_SOURCE)
-	set_target_properties(cas_core PROPERTIES OUTPUT_NAME cas_core)
+	add_library(cas_lib STATIC ${CAS_LIBRARY_SOURCE_FILES} ${CAS_HEADER_FILES})
+	target_link_libraries(cas_lib
+		PUBLIC
+			cas_project_options
+			cas_dep_libuv
+			cas_dep_llhttp
+			cas_dep_cjson
+	)
+	target_compile_definitions(cas_lib PUBLIC _GNU_SOURCE)
+	set_target_properties(cas_lib PROPERTIES OUTPUT_NAME cas_core)
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/${CAS_MAIN_FILE}")
 	add_executable(cas "${CAS_MAIN_FILE}")
 	target_link_libraries(cas PRIVATE cas_project_options)
 
-	if(TARGET cas_core)
-		target_link_libraries(cas PRIVATE cas_core)
+	if(TARGET cas_lib)
+		target_link_libraries(cas PRIVATE cas_lib)
 	endif()
 
 	if(CAS_ENABLE_TESTS)
@@ -307,8 +317,8 @@ if(CAS_ENABLE_TESTS)
 				target_compile_definitions(${CAS_TEST_NAME} PRIVATE _GNU_SOURCE)
 				target_link_libraries(${CAS_TEST_NAME} PRIVATE cas_project_options cmocka::cmocka)
 
-				if(TARGET cas_core AND NOT ${CAS_TEST_NAME} MATCHES "^test_cas_log")
-					target_link_libraries(${CAS_TEST_NAME} PRIVATE cas_core)
+				if(TARGET cas_lib AND NOT ${CAS_TEST_NAME} MATCHES "^test_cas_log")
+					target_link_libraries(${CAS_TEST_NAME} PRIVATE cas_lib)
 				endif()
 
 				if(${CAS_TEST_NAME} STREQUAL "test_cas_log")

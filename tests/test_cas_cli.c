@@ -9,8 +9,14 @@
 
 #include "cas_cli.h"
 #include "cas_config.h"
+#include "cas_udsp.h"
 #include "cas_version.h"
 #include "cas_utils.h"
+
+static void cas_test_reset_runtime_hooks(void)
+{
+	assert_int_equal(unsetenv(CAS_UDS_SOCKET_ENV), 0);
+}
 
 static char *cas_test_capture_command(int argc, char **argv, int *result, int use_error_stream)
 {
@@ -88,17 +94,54 @@ static void cas_cli_without_arguments_shows_help(void **state)
 	char *argv[] = {"cas"};
 	char *output;
 	int result;
+	const char *expected =
+		"AI agent system.\n"
+		"\n"
+		"Usage:\n"
+		"  cas [options] [command]\n"
+		"\n"
+		"Commands:\n"
+		"  version  Show this help message.\n"
+		"  help     Show detailed build information.\n"
+		"\n"
+		"Options:\n"
+		"  -h, --help    Show this help message.\n"
+		"  -v, --version Show detailed build information.\n";
 
 	(void)state;
 
 	output = cas_test_capture_command(1, argv, &result, 0);
 
 	assert_int_equal(result, 0);
-	assert_non_null(strstr(output, "Usage: cas [--help] [--version] <command>"));
-	assert_non_null(strstr(output, "help"));
-	assert_non_null(strstr(output, "version"));
+	assert_string_equal(output, expected);
 
 	cas_free(output);
+}
+
+static void cas_udsp_socket_path_uses_default_when_env_is_unset(void **state)
+{
+	(void)state;
+
+	assert_string_equal(cas_udsp_get_skt_path(), CAS_UDS_SKT_DEFAULT_PATH);
+	cas_test_reset_runtime_hooks();
+}
+
+static void cas_udsp_socket_path_uses_env_override(void **state)
+{
+	(void)state;
+
+	assert_int_equal(setenv(CAS_UDS_SOCKET_ENV, "/tmp/cas-test.sock", 1), 0);
+	assert_string_equal(cas_udsp_get_skt_path(), "/tmp/cas-test.sock");
+	cas_test_reset_runtime_hooks();
+}
+
+static void cas_udsp_socket_path_uses_default_when_env_is_empty(void **state)
+{
+	(void)state;
+
+	assert_int_equal(setenv(CAS_UDS_SOCKET_ENV, "", 1), 0);
+	assert_string_equal(cas_udsp_get_skt_path(), CAS_UDS_SKT_DEFAULT_PATH);
+	cas_test_reset_runtime_hooks();
 }
 
 static void cas_cli_help_subcommand_shows_help(void **state)
@@ -106,15 +149,26 @@ static void cas_cli_help_subcommand_shows_help(void **state)
 	char *argv[] = {"cas", "help"};
 	char *output;
 	int result;
+	const char *expected =
+		"AI agent system.\n"
+		"\n"
+		"Usage:\n"
+		"  cas [options] [command]\n"
+		"\n"
+		"Commands:\n"
+		"  version  Show this help message.\n"
+		"  help     Show detailed build information.\n"
+		"\n"
+		"Options:\n"
+		"  -h, --help    Show this help message.\n"
+		"  -v, --version Show detailed build information.\n";
 
 	(void)state;
 
 	output = cas_test_capture_command(2, argv, &result, 0);
 
 	assert_int_equal(result, 0);
-	assert_non_null(strstr(output, "Commands:"));
-	assert_non_null(strstr(output, "Show this help message."));
-	assert_non_null(strstr(output, "Show detailed build information."));
+	assert_string_equal(output, expected);
 
 	cas_free(output);
 }
@@ -124,15 +178,43 @@ static void cas_cli_help_option_shows_help(void **state)
 	char *argv[] = {"cas", "--help"};
 	char *output;
 	int result;
+	const char *expected =
+		"AI agent system.\n"
+		"\n"
+		"Usage:\n"
+		"  cas [options] [command]\n"
+		"\n"
+		"Commands:\n"
+		"  version  Show this help message.\n"
+		"  help     Show detailed build information.\n"
+		"\n"
+		"Options:\n"
+		"  -h, --help    Show this help message.\n"
+		"  -v, --version Show detailed build information.\n";
 
 	(void)state;
 
 	output = cas_test_capture_command(2, argv, &result, 0);
 
 	assert_int_equal(result, 0);
-	assert_non_null(strstr(output, "Usage: cas [--help] [--version] <command>"));
-	assert_non_null(strstr(output, "Commands:\n  help     Show this help message.\n"));
-	assert_non_null(strstr(output, "  version  Show detailed build information.\n"));
+	assert_string_equal(output, expected);
+
+	cas_free(output);
+}
+
+static void cas_cli_short_help_option_shows_help(void **state)
+{
+	char *argv[] = {"cas", "-h"};
+	char *output;
+	int result;
+
+	(void)state;
+
+	output = cas_test_capture_command(2, argv, &result, 0);
+
+	assert_int_equal(result, 0);
+	assert_non_null(strstr(output, "AI agent system."));
+	assert_non_null(strstr(output, "Options:\n"));
 
 	cas_free(output);
 }
@@ -140,6 +222,22 @@ static void cas_cli_help_option_shows_help(void **state)
 static void cas_cli_short_version_option_shows_version(void **state)
 {
 	char *argv[] = {"cas", "--version"};
+	char *output;
+	int result;
+
+	(void)state;
+
+	output = cas_test_capture_command(2, argv, &result, 0);
+
+	assert_int_equal(result, 0);
+	assert_string_equal(output, CAS_VERSION "\n");
+
+	cas_free(output);
+}
+
+static void cas_cli_short_version_alias_shows_version(void **state)
+{
+	char *argv[] = {"cas", "-v"};
 	char *output;
 	int result;
 
@@ -293,9 +391,14 @@ int main(void)
 {
 	const struct CMUnitTest cas_tests[] = {
 		cmocka_unit_test(cas_cli_without_arguments_shows_help),
+		cmocka_unit_test(cas_udsp_socket_path_uses_default_when_env_is_unset),
+		cmocka_unit_test(cas_udsp_socket_path_uses_env_override),
+		cmocka_unit_test(cas_udsp_socket_path_uses_default_when_env_is_empty),
 		cmocka_unit_test(cas_cli_help_subcommand_shows_help),
 		cmocka_unit_test(cas_cli_help_option_shows_help),
+		cmocka_unit_test(cas_cli_short_help_option_shows_help),
 		cmocka_unit_test(cas_cli_short_version_option_shows_version),
+		cmocka_unit_test(cas_cli_short_version_alias_shows_version),
 		cmocka_unit_test(cas_cli_version_subcommand_shows_build_details),
 		cmocka_unit_test(cas_cli_unknown_subcommand_returns_failure),
 		cmocka_unit_test(cas_version_dep_basename_handles_paths_without_separator),

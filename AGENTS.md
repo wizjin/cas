@@ -45,13 +45,24 @@
 - Put public headers in `include/`.
 - Put internal headers in `src/`.
 - Use `CAS_` or `cas_` as the prefix for code files, functions, macros, and related symbols when applicable.
+- Prefer minimal public interfaces. Expose types, fields, and replaceable hooks only when the requirement clearly needs them.
 - Prefer struct typedef aliases, but do not hide pointer semantics in them. Use explicit `*` in APIs.
 - Keep project configuration macros in `src/cas_config.h` when they are consumed by internal source files.
+- Use a single canonical configuration access path for internal runtime settings. Avoid passing the same config value through multiple internal layers when a shared accessor already exists.
 - Prefer self-explanatory names and avoid comments unless they prevent real ambiguity.
 - Prefer short, conventional C local variable names only when they remain self-explanatory in context.
-- Prefer declaration with initialization at first use. Keep split declaration and assignment only when required by C APIs such as `va_list`.
+- Prefer declaration with initialization at first use.
+- Do not group local declarations at function entry.
+- Merge declaration and first assignment whenever possible. Keep split declaration and assignment only when required by C APIs such as `va_list`.
+- A declaration counts as moved down only when it appears at the first meaningful assignment site. Placeholder initialization such as `NULL`, `0`, or `false` near the top of the function does not satisfy this rule.
+- When cleanup logic pressures a variable to exist earlier than its first real value, refactor the cleanup path or ownership flow instead of keeping a placeholder-initialized declaration.
+- Prefer existing protocol libraries over handwritten parsers when the project already depends on them. For HTTP parsing, prefer `llhttp`.
+- Do not use `goto`.
 - Inline trivial one-use conditions instead of creating tiny helper functions that obscure the main path.
+- Avoid trivial passthrough wrappers when a command table or caller can reference the real implementation directly.
+- Prefer opaque CLI contexts with helper output functions over exposing internal CLI state fields.
 - Design interfaces and modules with single responsibility, low coupling, high cohesion, open/closed principle, and Law of Demeter.
+- Prefer table-driven routing with structs and function pointers when implementing small protocol dispatchers.
 - When reviewing naming, focus refactors on production and shared interfaces first; keep test case names descriptive unless the user explicitly asks to shorten them.
 - When the user narrows review scope to one issue class, keep the audit and plan limited to that class unless the user expands scope.
 
