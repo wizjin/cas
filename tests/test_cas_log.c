@@ -11,6 +11,7 @@
 #include <cmocka.h>
 
 #include "cas_log.h"
+#include "cas_utils.h"
 #include "../src/cas_log.c"
 
 #define CAS_TEST_REAL_STRFTIME	   ((size_t) - 2)
@@ -148,7 +149,7 @@ static int cas_test_teardown(void **state)
 static char *cas_test_log_snapshot(FILE *stream)
 {
 	long position;
-	char *buffer;
+	char *buf;
 	size_t size;
 
 	assert_non_null(stream);
@@ -158,15 +159,15 @@ static char *cas_test_log_snapshot(FILE *stream)
 	size = (size_t)position;
 	assert_int_equal(fseek(stream, 0, SEEK_SET), 0);
 
-	buffer = malloc(size + 1);
-	assert_non_null(buffer);
+	buf = cas_alloc(size + 1);
+	assert_non_null(buf);
 	if (size > 0) {
-		assert_int_equal((int)fread(buffer, 1, size, stream), (int)size);
+		assert_int_equal((int)fread(buf, 1, size, stream), (int)size);
 	}
-	buffer[size] = '\0';
+	buf[size] = '\0';
 	assert_int_equal(fseek(stream, 0, SEEK_END), 0);
 
-	return buffer;
+	return buf;
 }
 
 static void cas_log_create_and_release_manage_handle(void **state)
@@ -351,7 +352,7 @@ static void cas_log_output_writes_expected_format(void **state)
 	assert_true(output[23] == '+' || output[23] == '-');
 	assert_non_null(strstr(output, " I/core - hello world\n"));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -379,7 +380,7 @@ static void cas_log_output_filters_by_level(void **state)
 	assert_null(strstr(output, "hidden"));
 	assert_non_null(strstr(output, " W/core - shown\n"));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -405,7 +406,7 @@ static void cas_log_output_uses_fixed_width_category_name(void **state)
 
 	assert_non_null(strstr(output, " I/net  - shown\n"));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -439,7 +440,7 @@ static void cas_log_output_truncates_long_message(void **state)
 	assert_int_equal(output[length - 1], '\n');
 	assert_non_null(strstr(output, " T/core - "));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -465,7 +466,7 @@ static void cas_log_output_handles_null_inputs(void **state)
 	output = cas_test_log_snapshot(stream);
 	assert_string_equal(output, "");
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -490,7 +491,7 @@ static void cas_log_output_uses_unknown_level_marker(void **state)
 	output = cas_test_log_snapshot(stream);
 	assert_non_null(strstr(output, " N/core - unknown\n"));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -535,7 +536,7 @@ static void cas_log_output_handles_prefix_failures(void **state)
 	output = cas_test_log_snapshot(stream);
 	assert_string_equal(output, "");
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -604,7 +605,7 @@ static void cas_log_output_handles_log_pointer_and_message_failures(void **state
 	output = cas_test_log_snapshot(stream);
 	assert_string_equal(output, "");
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -630,7 +631,7 @@ static void cas_log_output_keeps_existing_newline(void **state)
 	assert_non_null(strstr(output, " I/core - line\n"));
 	assert_null(strstr(output, "line\n\n"));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -656,7 +657,7 @@ static void cas_log_output_keeps_existing_newline_with_direct_call(void **state)
 	assert_non_null(strstr(output, " I/core - line\n"));
 	assert_null(strstr(output, "line\n\n"));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -683,7 +684,7 @@ static void cas_log_output_handles_write_lock_failure(void **state)
 	output = cas_test_log_snapshot(stream);
 	assert_string_equal(output, "");
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }
@@ -748,7 +749,7 @@ static void cas_log_output_is_thread_safe(void **state)
 
 	assert_int_equal(line_count, cas_thread_count * cas_message_count);
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }

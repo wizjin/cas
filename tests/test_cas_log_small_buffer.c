@@ -10,12 +10,13 @@
 #define CAS_LOG_BUFFER_SIZE 39
 
 #include "cas_log.h"
+#include "cas_utils.h"
 #include "../src/cas_log.c"
 
 static char *cas_test_log_snapshot(FILE *stream)
 {
 	long position;
-	char *buffer;
+	char *buf;
 	size_t size;
 
 	assert_non_null(stream);
@@ -25,15 +26,15 @@ static char *cas_test_log_snapshot(FILE *stream)
 	size = (size_t)position;
 	assert_int_equal(fseek(stream, 0, SEEK_SET), 0);
 
-	buffer = malloc(size + 1);
-	assert_non_null(buffer);
+	buf = cas_alloc(size + 1);
+	assert_non_null(buf);
 	if (size > 0) {
-		assert_int_equal((int)fread(buffer, 1, size, stream), (int)size);
+		assert_int_equal((int)fread(buf, 1, size, stream), (int)size);
 	}
-	buffer[size] = '\0';
+	buf[size] = '\0';
 	assert_int_equal(fseek(stream, 0, SEEK_END), 0);
 
-	return buffer;
+	return buf;
 }
 
 static void cas_log_output_truncates_when_prefix_fills_buffer(void **state)
@@ -61,7 +62,7 @@ static void cas_log_output_truncates_when_prefix_fills_buffer(void **state)
 	assert_int_equal(output[length - 1], '\n');
 	assert_null(strstr(output, "message is ignored"));
 
-	free(output);
+	cas_free(output);
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
 }

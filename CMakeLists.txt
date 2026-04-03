@@ -270,6 +270,7 @@ endif()
 if(CAS_LIBRARY_SOURCE_FILES)
 	add_library(cas_core STATIC ${CAS_LIBRARY_SOURCE_FILES} ${CAS_HEADER_FILES})
 	target_link_libraries(cas_core PUBLIC cas_project_options)
+	target_compile_definitions(cas_core PUBLIC _GNU_SOURCE)
 	set_target_properties(cas_core PROPERTIES OUTPUT_NAME cas_core)
 endif()
 

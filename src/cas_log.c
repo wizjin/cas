@@ -1,11 +1,11 @@
 #include "cas_log.h"
 #include "cas_config.h"
+#include "cas_utils.h"
 
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -103,7 +103,7 @@ cas_log_t *cas_log_create(FILE *out, uint8_t level)
 		return NULL;
 	}
 
-	cas_log_t *log = malloc(sizeof(*log));
+	cas_log_t *log = cas_alloc(sizeof(*log));
 	if (log == NULL) {
 		return NULL;
 	}
@@ -112,7 +112,7 @@ cas_log_t *cas_log_create(FILE *out, uint8_t level)
 	atomic_init(&log->level, level);
 	log->categories = NULL;
 	if (pthread_mutex_init(&log->mutex, NULL) != 0) {
-		free(log);
+		cas_free(log);
 		return NULL;
 	}
 
@@ -128,28 +128,28 @@ void cas_log_release(cas_log_t **log)
 	cas_log_category_t *category = (*log)->categories;
 	while (category != NULL) {
 		cas_log_category_t *next = category->next;
-		free(category);
+		cas_free(category);
 		category = next;
 	}
 
 	(void)pthread_mutex_destroy(&(*log)->mutex);
-	free(*log);
+	cas_free(*log);
 	*log = NULL;
 }
 
 cas_log_category_t *cas_log_get_category(cas_log_t *log, const char *name)
 {
-	char normalized[CAS_LOG_CATEGORY_NAME_SIZE];
-	size_t len = 0;
+	char cat_name[CAS_LOG_CATEGORY_NAME_SIZE];
+	size_t idx = 0;
 
 	if (log == NULL || name == NULL) {
 		return NULL;
 	}
 
-	(void)memset(normalized, ' ', sizeof(normalized));
-	while (len < sizeof(normalized) && name[len] != '\0') {
-		normalized[len] = name[len];
-		len++;
+	(void)memset(cat_name, ' ', sizeof(cat_name));
+	while (idx < sizeof(cat_name) && name[idx] != '\0') {
+		cat_name[idx] = name[idx];
+		idx++;
 	}
 
 	if (!cas_log_lock(log)) {
@@ -158,18 +158,18 @@ cas_log_category_t *cas_log_get_category(cas_log_t *log, const char *name)
 
 	cas_log_category_t *cat = NULL;
 	for (cas_log_category_t *it = log->categories; it != NULL; it = it->next) {
-		if (memcmp(it->name, normalized, sizeof(normalized)) == 0) {
+		if (memcmp(it->name, cat_name, sizeof(cat_name)) == 0) {
 			cat = it;
 			break;
 		}
 	}
 
 	if (cat == NULL) {
-		cas_log_category_t *new_cat = malloc(sizeof(*new_cat));
+		cas_log_category_t *new_cat = cas_alloc(sizeof(*new_cat));
 		if (new_cat != NULL) {
 			new_cat->log = log;
 			new_cat->next = log->categories;
-			(void)memcpy(new_cat->name, normalized, sizeof(normalized));
+			(void)memcpy(new_cat->name, cat_name, sizeof(cat_name));
 			log->categories = new_cat;
 			cat = new_cat;
 		}
@@ -182,7 +182,7 @@ cas_log_category_t *cas_log_get_category(cas_log_t *log, const char *name)
 
 void cas_log_output(cas_log_category_t *c, uint8_t level, const char *format, ...)
 {
-	char buf[CAS_LOG_BUFFER_SIZE];
+	char msg[CAS_LOG_BUFFER_SIZE];
 
 	if (c == NULL || format == NULL) {
 		return;
@@ -198,40 +198,40 @@ void cas_log_output(cas_log_category_t *c, uint8_t level, const char *format, ..
 		return;
 	}
 
-	size_t len = cas_log_format_prefix(buf, sizeof(buf), level, c->name);
+	size_t len = cas_log_format_prefix(msg, sizeof(msg), level, c->name);
 	if (len == 0) {
 		return;
 	}
 
-	if (len < sizeof(buf) - 1) {
+	if (len < sizeof(msg) - 1) {
 		va_list args;
 
 		va_start(args, format);
-		int n = vsnprintf(buf + len, sizeof(buf) - len, format, args);
+		int n = vsnprintf(msg + len, sizeof(msg) - len, format, args);
 		va_end(args);
 		if (n < 0) {
 			return;
 		}
 
-		if ((size_t)n >= sizeof(buf) - len) {
-			len = sizeof(buf) - 1;
+		if ((size_t)n >= sizeof(msg) - len) {
+			len = sizeof(msg) - 1;
 		} else {
 			len += (size_t)n;
 		}
 	}
 
-	if (len >= sizeof(buf) - 1) {
-		buf[sizeof(buf) - 2] = '\n';
-		buf[sizeof(buf) - 1] = '\0';
-		len = sizeof(buf) - 1;
-	} else if (buf[len - 1] != '\n') {
-		buf[len] = '\n';
-		buf[len + 1] = '\0';
+	if (len >= sizeof(msg) - 1) {
+		msg[sizeof(msg) - 2] = '\n';
+		msg[sizeof(msg) - 1] = '\0';
+		len = sizeof(msg) - 1;
+	} else if (msg[len - 1] != '\n') {
+		msg[len] = '\n';
+		msg[len + 1] = '\0';
 		len++;
 	}
 
 	if (cas_log_lock(log)) {
-		(void)fwrite(buf, 1, len, log->out);
+		(void)fwrite(msg, 1, len, log->out);
 		cas_log_unlock(log);
 	}
 }

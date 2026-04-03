@@ -9,11 +9,10 @@
 
 #define cas_alloc(size) malloc(size)
 #define cas_free(ptr)	free(ptr)
+#define cas_str_copy(dst, dst_size, src) ((void)strlcpy((dst), (src), (dst_size)))
 
 #ifndef bzero
 #define bzero(ptr, len) memset(ptr, 0, len)
 #endif
-
-void cas_utils_copy_string(char *dst, size_t dst_size, const char *src);
 
 #endif

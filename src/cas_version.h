@@ -16,10 +16,9 @@ typedef FILE *(*cas_version_maps_file_open_fn_t)(const char *path, const char *m
 
 int cas_version_run_short(FILE *out);
 int cas_version_run_details(FILE *out);
-const char *cas_version_dependency_basename(const char *path);
-void cas_version_extract_dependency_version(char *version, size_t version_size, const char *path);
-size_t cas_version_collect_dependencies_from_file(FILE *maps_file, cas_version_dependency_t *dependencies,
-												  size_t capacity);
-void cas_version_set_maps_file_open_fn(cas_version_maps_file_open_fn_t open_fn);
+const char *cas_version_dep_basename(const char *path);
+void cas_version_dep_version(char *version, size_t version_size, const char *path);
+size_t cas_version_collect_deps(FILE *maps_file, cas_version_dependency_t *dependencies, size_t capacity);
+void cas_version_set_maps_open_fn(cas_version_maps_file_open_fn_t open_fn);
 
 #endif

@@ -52,13 +52,15 @@
 - Prefer declaration with initialization at first use. Keep split declaration and assignment only when required by C APIs such as `va_list`.
 - Inline trivial one-use conditions instead of creating tiny helper functions that obscure the main path.
 - Design interfaces and modules with single responsibility, low coupling, high cohesion, open/closed principle, and Law of Demeter.
+- When reviewing naming, focus refactors on production and shared interfaces first; keep test case names descriptive unless the user explicitly asks to shorten them.
+- When the user narrows review scope to one issue class, keep the audit and plan limited to that class unless the user expands scope.
 
 ## Build And Dependency Rules
 - Use CMake.
 - Keep build configuration centralized in the root `CMakeLists.txt`.
 - Use the root `Makefile` as the public entrypoint for common developer tasks.
 - Support `make clean`, `make build`, `make format`, `make tidy`, `make test`, `make coverage`, and `make release`.
-- Apply feature-test macros such as `_POSIX_C_SOURCE` through CMake `target_compile_definitions` with the narrowest target scope possible.
+- Apply feature-test macros needed by system APIs through CMake `target_compile_definitions` with the narrowest target scope possible, and verify declaration visibility before replacing project wrappers with direct system calls or macros.
 - Keep Make output quiet. Print only essential status lines with `echo`.
 - Do not run Make in parallel.
 - Keep all build artifacts and intermediate files under `build/`.

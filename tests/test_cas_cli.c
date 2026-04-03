@@ -98,7 +98,7 @@ static void cas_cli_without_arguments_shows_help(void **state)
 	assert_non_null(strstr(output, "help"));
 	assert_non_null(strstr(output, "version"));
 
-	free(output);
+	cas_free(output);
 }
 
 static void cas_cli_help_subcommand_shows_help(void **state)
@@ -116,7 +116,7 @@ static void cas_cli_help_subcommand_shows_help(void **state)
 	assert_non_null(strstr(output, "Show this help message."));
 	assert_non_null(strstr(output, "Show detailed build information."));
 
-	free(output);
+	cas_free(output);
 }
 
 static void cas_cli_help_option_shows_help(void **state)
@@ -134,7 +134,7 @@ static void cas_cli_help_option_shows_help(void **state)
 	assert_non_null(strstr(output, "Commands:\n  help     Show this help message.\n"));
 	assert_non_null(strstr(output, "  version  Show detailed build information.\n"));
 
-	free(output);
+	cas_free(output);
 }
 
 static void cas_cli_short_version_option_shows_version(void **state)
@@ -150,7 +150,7 @@ static void cas_cli_short_version_option_shows_version(void **state)
 	assert_int_equal(result, 0);
 	assert_string_equal(output, CAS_VERSION "\n");
 
-	free(output);
+	cas_free(output);
 }
 
 static void cas_cli_version_subcommand_shows_build_details(void **state)
@@ -173,7 +173,7 @@ static void cas_cli_version_subcommand_shows_build_details(void **state)
 				strstr(output, "  - libuv") != NULL || strstr(output, "  - llhttp") != NULL ||
 				strstr(output, "  - cJSON") != NULL);
 
-	free(output);
+	cas_free(output);
 }
 
 static void cas_cli_unknown_subcommand_returns_failure(void **state)
@@ -190,58 +190,58 @@ static void cas_cli_unknown_subcommand_returns_failure(void **state)
 	assert_non_null(strstr(output, "Unknown command: unknown"));
 	assert_non_null(strstr(output, "cas help"));
 
-	free(output);
+	cas_free(output);
 }
 
-static void cas_version_dependency_basename_handles_paths_without_separator(void **state)
+static void cas_version_dep_basename_handles_paths_without_separator(void **state)
 {
 	(void)state;
 
-	assert_string_equal(cas_version_dependency_basename("libuv.so.1"), "libuv.so.1");
+	assert_string_equal(cas_version_dep_basename("libuv.so.1"), "libuv.so.1");
 }
 
-static void cas_utils_copy_string_ignores_zero_sized_destination(void **state)
+static void cas_str_copy_ignores_zero_sized_destination(void **state)
 {
 	char destination[8] = "keep";
 
 	(void)state;
 
-	cas_utils_copy_string(destination, 0, "change");
+	cas_str_copy(destination, 0, "change");
 	assert_string_equal(destination, "keep");
 }
 
-static void cas_version_extract_dependency_version_returns_unknown_without_version_suffix(void **state)
+static void cas_version_dep_version_returns_unknown_without_version_suffix(void **state)
 {
 	char version[CAS_VERSION_DEPENDENCY_VERSION_SIZE];
 
 	(void)state;
 
-	cas_version_extract_dependency_version(version, sizeof(version), "/usr/lib/libuv.so");
+	cas_version_dep_version(version, sizeof(version), "/usr/lib/libuv.so");
 	assert_string_equal(version, "unknown");
 }
 
-static void cas_version_extract_dependency_version_returns_unknown_with_empty_version_suffix(void **state)
+static void cas_version_dep_version_returns_unknown_with_empty_version_suffix(void **state)
 {
 	char version[CAS_VERSION_DEPENDENCY_VERSION_SIZE];
 
 	(void)state;
 
-	cas_version_extract_dependency_version(version, sizeof(version), "/usr/lib/libuv.so.");
+	cas_version_dep_version(version, sizeof(version), "/usr/lib/libuv.so.");
 	assert_string_equal(version, "unknown");
 }
 
-static void cas_version_collect_dependencies_rejects_invalid_inputs(void **state)
+static void cas_version_collect_deps_rejects_invalid_inputs(void **state)
 {
 	cas_version_dependency_t dependencies[1];
 
 	(void)state;
 
-	assert_int_equal(cas_version_collect_dependencies_from_file(NULL, dependencies, 1), 0);
-	assert_int_equal(cas_version_collect_dependencies_from_file(stdout, NULL, 1), 0);
-	assert_int_equal(cas_version_collect_dependencies_from_file(stdout, dependencies, 0), 0);
+	assert_int_equal(cas_version_collect_deps(NULL, dependencies, 1), 0);
+	assert_int_equal(cas_version_collect_deps(stdout, NULL, 1), 0);
+	assert_int_equal(cas_version_collect_deps(stdout, dependencies, 0), 0);
 }
 
-static void cas_version_collect_dependencies_limits_results_to_capacity(void **state)
+static void cas_version_collect_deps_limits_results_to_capacity(void **state)
 {
 	FILE *maps_file;
 	cas_version_dependency_t dependencies[1];
@@ -251,13 +251,13 @@ static void cas_version_collect_dependencies_limits_results_to_capacity(void **s
 	maps_file = cas_test_open_maps_file("7f00-7f01 r--p 00000000 00:00 0 /usr/lib/libjemalloc.so.2\n"
 										"7f01-7f02 r--p 00000000 00:00 0 /usr/lib/libuv.so.1\n");
 
-	assert_int_equal(cas_version_collect_dependencies_from_file(maps_file, dependencies, 1), 1);
+	assert_int_equal(cas_version_collect_deps(maps_file, dependencies, 1), 1);
 	assert_string_equal(dependencies[0].name, "jemalloc");
 	assert_string_equal(dependencies[0].version, "2");
 	assert_int_equal(fclose(maps_file), 0);
 }
 
-static void cas_version_collect_dependencies_accepts_last_line_without_newline(void **state)
+static void cas_version_collect_deps_accepts_last_line_without_newline(void **state)
 {
 	FILE *maps_file;
 	cas_version_dependency_t dependencies[1];
@@ -265,7 +265,7 @@ static void cas_version_collect_dependencies_accepts_last_line_without_newline(v
 	(void)state;
 
 	maps_file = cas_test_open_maps_file("7f01-7f02 r--p 00000000 00:00 0 /usr/lib/libuv.so.1");
-	assert_int_equal(cas_version_collect_dependencies_from_file(maps_file, dependencies, 1), 1);
+	assert_int_equal(cas_version_collect_deps(maps_file, dependencies, 1), 1);
 	assert_string_equal(dependencies[0].name, "libuv");
 	assert_string_equal(dependencies[0].version, "1");
 	assert_int_equal(fclose(maps_file), 0);
@@ -278,15 +278,15 @@ static void cas_version_run_details_reports_none_when_maps_file_is_unavailable(v
 
 	(void)state;
 
-	cas_version_set_maps_file_open_fn(cas_test_open_maps_file_failure);
+	cas_version_set_maps_open_fn(cas_test_open_maps_file_failure);
 	output = cas_test_capture_version_details(&result);
-	cas_version_set_maps_file_open_fn(NULL);
+	cas_version_set_maps_open_fn(NULL);
 
 	assert_int_equal(result, 0);
 	assert_non_null(strstr(output, "Dependencies:\n"));
 	assert_non_null(strstr(output, "  - none\n"));
 
-	free(output);
+	cas_free(output);
 }
 
 int main(void)
@@ -298,13 +298,13 @@ int main(void)
 		cmocka_unit_test(cas_cli_short_version_option_shows_version),
 		cmocka_unit_test(cas_cli_version_subcommand_shows_build_details),
 		cmocka_unit_test(cas_cli_unknown_subcommand_returns_failure),
-		cmocka_unit_test(cas_version_dependency_basename_handles_paths_without_separator),
-		cmocka_unit_test(cas_utils_copy_string_ignores_zero_sized_destination),
-		cmocka_unit_test(cas_version_extract_dependency_version_returns_unknown_without_version_suffix),
-		cmocka_unit_test(cas_version_extract_dependency_version_returns_unknown_with_empty_version_suffix),
-		cmocka_unit_test(cas_version_collect_dependencies_rejects_invalid_inputs),
-		cmocka_unit_test(cas_version_collect_dependencies_limits_results_to_capacity),
-		cmocka_unit_test(cas_version_collect_dependencies_accepts_last_line_without_newline),
+		cmocka_unit_test(cas_version_dep_basename_handles_paths_without_separator),
+		cmocka_unit_test(cas_str_copy_ignores_zero_sized_destination),
+		cmocka_unit_test(cas_version_dep_version_returns_unknown_without_version_suffix),
+		cmocka_unit_test(cas_version_dep_version_returns_unknown_with_empty_version_suffix),
+		cmocka_unit_test(cas_version_collect_deps_rejects_invalid_inputs),
+		cmocka_unit_test(cas_version_collect_deps_limits_results_to_capacity),
+		cmocka_unit_test(cas_version_collect_deps_accepts_last_line_without_newline),
 		cmocka_unit_test(cas_version_run_details_reports_none_when_maps_file_is_unavailable),
 	};
 
