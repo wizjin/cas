@@ -8,6 +8,9 @@ Back to `doc/index.md`.
 - `cas --help` prints the same help text as `cas help`.
 - `cas --version` prints the project version string.
 - `cas version` prints detailed build information.
+- `cas start` starts the CAS service.
+- `cas status` prints the CAS service status.
+- `cas stop` stops the CAS service.
 - Running `cas` without a subcommand prints the same help text.
 
 ## Implementation
@@ -15,5 +18,6 @@ Back to `doc/index.md`.
 - Keep subcommand dispatch in `src/cas_cli.h` and `src/cas_cli.c`.
 - Keep configuration macros in `src/cas_config.h`.
 - Use `CAS_VERSION` as the version macro.
+- Keep the help output command list aligned with the command table.
 - Use a command table with structs and function pointers for dispatch.
 - Keep command output deterministic for unit tests.

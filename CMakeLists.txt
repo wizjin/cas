@@ -295,7 +295,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/${CAS_MAIN_FILE}")
 	if(CAS_ENABLE_TESTS)
 		add_test(NAME cas_help COMMAND cas help)
 		add_test(NAME cas_short_version COMMAND cas --version)
-		add_test(NAME cas_version COMMAND cas version)
+		add_test(NAME cas_ver COMMAND cas version)
 	endif()
 else()
 	add_custom_target(cas

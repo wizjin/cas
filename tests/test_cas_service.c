@@ -111,12 +111,17 @@ static char *cas_test_capture_cli(int argc, char **argv, int *result, int use_er
 	FILE *err_stream;
 	char *buffer = NULL;
 	size_t size = 0;
+	cas_cli_t cli;
 
 	out_stream = open_memstream(&buffer, &size);
 	assert_non_null(out_stream);
 	err_stream = use_error_stream ? out_stream : tmpfile();
 	assert_non_null(err_stream);
-	*result = cas_cli_run(argc, argv, out_stream, err_stream);
+	cli.out = out_stream;
+	cli.err = err_stream;
+	cli.argc = argc;
+	cli.argv = argv;
+	*result = cas_cli_run(&cli);
 	assert_int_equal(fflush(out_stream), 0);
 	if (!use_error_stream) {
 		assert_int_equal(fclose(err_stream), 0);
@@ -274,8 +279,7 @@ static void cas_service_bad_request_returns_400(void **state)
 	cas_test_make_socket_path(socket_path, sizeof(socket_path));
 	cas_test_start_service(&service, socket_path);
 
-	response = cas_test_send_raw_request(socket_path,
-										 "GET / HTTP/1.1\r\nHost localhost\r\nContent-Length: 0\r\n\r\n");
+	response = cas_test_send_raw_request(socket_path, "GET / HTTP/1.1\r\nHost localhost\r\nContent-Length: 0\r\n\r\n");
 	assert_non_null(strstr(response, "400 Bad Request"));
 	assert_non_null(strstr(response, "bad_request"));
 	free(response);
@@ -296,8 +300,8 @@ static void cas_service_not_found_returns_404(void **state)
 	cas_test_make_socket_path(socket_path, sizeof(socket_path));
 	cas_test_start_service(&service, socket_path);
 
-	response = cas_test_send_raw_request(socket_path,
-										 "GET /unknown HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n");
+	response =
+		cas_test_send_raw_request(socket_path, "GET /unknown HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n");
 	assert_non_null(strstr(response, "404 Not Found"));
 	assert_non_null(strstr(response, "not_found"));
 	free(response);
@@ -318,8 +322,9 @@ static void cas_service_bad_json_returns_400(void **state)
 	cas_test_make_socket_path(socket_path, sizeof(socket_path));
 	cas_test_start_service(&service, socket_path);
 
-	response = cas_test_send_raw_request(socket_path,
-										 "POST /actuator/stop HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 1\r\n\r\n{");
+	response =
+		cas_test_send_raw_request(socket_path, "POST /actuator/stop HTTP/1.1\r\nHost: localhost\r\nContent-Type: "
+											   "application/json\r\nContent-Length: 1\r\n\r\n{");
 	assert_non_null(strstr(response, "400 Bad Request"));
 	assert_non_null(strstr(response, "bad_json"));
 	free(response);
@@ -387,15 +392,6 @@ static void cas_core_and_acts_helpers_work(void **state)
 
 	assert_null(cas_acts_status(NULL, NULL));
 	assert_null(cas_acts_stop(NULL, NULL));
-}
-
-static void cas_ctrl_returns_error_for_null_cli(void **state)
-{
-	(void)state;
-
-	assert_int_equal(cas_ctrl_start(NULL), 1);
-	assert_int_equal(cas_ctrl_status(NULL), 1);
-	assert_int_equal(cas_ctrl_stop(NULL), 1);
 }
 
 static void cas_udsp_status_helpers_cover_false_cases(void **state)
@@ -503,7 +499,6 @@ int main(void)
 		cmocka_unit_test(cas_service_bad_json_returns_400),
 		cmocka_unit_test(cas_core_run_removes_stale_socket_file),
 		cmocka_unit_test(cas_core_and_acts_helpers_work),
-		cmocka_unit_test(cas_ctrl_returns_error_for_null_cli),
 		cmocka_unit_test(cas_udsp_status_helpers_cover_false_cases),
 		cmocka_unit_test(cas_udsc_invalid_inputs_return_null),
 		cmocka_unit_test(cas_evnt_public_guards_and_lifecycle),

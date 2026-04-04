@@ -3,25 +3,16 @@
 
 #include <stdio.h>
 
-typedef struct cas_cli_ctx {
+typedef struct {
 	FILE *out;
 	FILE *err;
-} cas_cli_ctx_t;
+	int argc;
+	char **argv;
+} cas_cli_t;
 
-#define cas_cli_info(c, ...)                                                                                         \
-	do {                                                                                                           \
-		if ((c) != NULL && (c)->out != NULL) {                                                                    \
-			(void)fprintf((c)->out, __VA_ARGS__);                                                                 \
-		}                                                                                                          \
-	} while (0)
+#define cas_cli_out(c, ...) (void)fprintf((c)->out, __VA_ARGS__)
+#define cas_cli_err(c, ...) (void)fprintf((c)->err, __VA_ARGS__)
 
-#define cas_cli_error(c, ...)                                                                                        \
-	do {                                                                                                           \
-		if ((c) != NULL && (c)->err != NULL) {                                                                    \
-			(void)fprintf((c)->err, __VA_ARGS__);                                                                 \
-		}                                                                                                          \
-	} while (0)
-
-int cas_cli_run(int argc, char **argv, FILE *out, FILE *err);
+int cas_cli_run(const cas_cli_t *cli);
 
 #endif

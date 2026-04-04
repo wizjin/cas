@@ -207,9 +207,9 @@ static char *cas_udss_build_response_text(const cas_udss_response_t *response, s
 	}
 
 	(void)snprintf(prefix, sizeof(prefix),
-				  "HTTP/1.1 %d %s\r\nContent-Type: application/json\r\nContent-Length: %zu\r\n"
-				  "Connection: close\r\n\r\n",
-				  response->status_code, response->reason_phrase, response->body_len);
+				   "HTTP/1.1 %d %s\r\nContent-Type: application/json\r\nContent-Length: %zu\r\n"
+				   "Connection: close\r\n\r\n",
+				   response->status_code, response->reason_phrase, response->body_len);
 	size_t prefix_len = strlen(prefix);
 	size_t total = prefix_len + response->body_len + 1;
 	char *buffer = cas_alloc(total);

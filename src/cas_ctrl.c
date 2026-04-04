@@ -6,25 +6,20 @@
 
 #include <cJSON.h>
 #include <stdio.h>
+#include <assert.h>
 
-int cas_ctrl_start(cas_cli_ctx_t *cli)
+int cas_ctrl_start(const cas_cli_t *cli)
 {
-	if (cli == NULL) {
-		return 1;
-	}
-
-	return cas_core_run(stderr);
+	assert(cli != NULL);
+	return cas_core_run(cli->err);
 }
 
-int cas_ctrl_stop(cas_cli_ctx_t *cli)
+int cas_ctrl_stop(const cas_cli_t *cli)
 {
-	if (cli == NULL) {
-		return 1;
-	}
-
+	assert(cli != NULL);
 	cJSON *body = cas_udsc_post(cas_udsp_get_skt_path(), cas_udsp_request_tables[CAS_UDSP_CMD_STOP].path, NULL);
 	if (body == NULL) {
-		cas_cli_error(cli, "Failed to stop service via %s\n", cas_udsp_get_skt_path());
+		cas_cli_err(cli, "Failed to stop service via %s\n", cas_udsp_get_skt_path());
 		return 1;
 	}
 
@@ -34,21 +29,19 @@ int cas_ctrl_stop(cas_cli_ctx_t *cli)
 		return 1;
 	}
 
-	cas_cli_info(cli, "%s\n", text);
+	cas_cli_out(cli, "%s\n", text);
 	cJSON_free(text);
 
 	return 0;
 }
 
-int cas_ctrl_status(cas_cli_ctx_t *cli)
+int cas_ctrl_status(const cas_cli_t *cli)
 {
-	if (cli == NULL) {
-		return 1;
-	}
+	assert(cli != NULL);
 
 	cJSON *body = cas_udsc_get(cas_udsp_get_skt_path(), cas_udsp_request_tables[CAS_UDSP_CMD_STATUS].path);
 	if (body == NULL) {
-		cas_cli_error(cli, "Failed to query service via %s\n", cas_udsp_get_skt_path());
+		cas_cli_err(cli, "Failed to query service via %s\n", cas_udsp_get_skt_path());
 		return 1;
 	}
 
@@ -58,7 +51,7 @@ int cas_ctrl_status(cas_cli_ctx_t *cli)
 		return 1;
 	}
 
-	cas_cli_info(cli, "%s\n", text);
+	cas_cli_out(cli, "%s\n", text);
 	cJSON_free(text);
 
 	return 0;

@@ -201,7 +201,8 @@ static void cas_udsc_reset_response(cas_udsc_http_response_t *response)
 	response->body_cap = 0;
 }
 
-static int cas_udsc_parse_response(const char *buffer, size_t len, int *status_code, const char **body, size_t *body_len)
+static int cas_udsc_parse_response(const char *buffer, size_t len, int *status_code, const char **body,
+								   size_t *body_len)
 {
 	if (buffer == NULL || status_code == NULL || body == NULL || body_len == NULL) {
 		return -1;
@@ -254,9 +255,9 @@ static char *cas_udsc_build_request_text(const char *method, const char *path, c
 	}
 
 	(void)snprintf(prefix, sizeof(prefix),
-				  "%s %s HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n"
-				  "Content-Length: %zu\r\nConnection: close\r\n\r\n",
-				  method, path, body_len);
+				   "%s %s HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n"
+				   "Content-Length: %zu\r\nConnection: close\r\n\r\n",
+				   method, path, body_len);
 	size_t prefix_len = strlen(prefix);
 	size_t total = prefix_len + body_len + 1;
 	char *buffer = cas_alloc(total);
@@ -311,7 +312,8 @@ static cJSON *cas_udsc_request(const char *socket_path, const char *method, cons
 	int status_code;
 	size_t response_body_len;
 	const char *response_body;
-	int parse_result = cas_udsc_parse_response(response, response_size, &status_code, &response_body, &response_body_len);
+	int parse_result =
+		cas_udsc_parse_response(response, response_size, &status_code, &response_body, &response_body_len);
 	if (parse_result != 1) {
 		cas_free(response);
 		return NULL;
