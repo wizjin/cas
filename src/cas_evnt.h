@@ -1,7 +1,7 @@
 #ifndef CAS_EVNT_H
 #define CAS_EVNT_H
 
-#include <stddef.h>
+#include "cas_cfg.h"
 #include <uv.h>
 
 typedef void (*cas_evnt_signal_cb_t)(void *ctx);

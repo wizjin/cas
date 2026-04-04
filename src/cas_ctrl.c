@@ -5,8 +5,6 @@
 #include "cas_utils.h"
 
 #include <cJSON.h>
-#include <stdio.h>
-#include <assert.h>
 
 int cas_ctrl_start(const cas_cli_t *cli)
 {

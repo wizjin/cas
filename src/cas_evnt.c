@@ -3,9 +3,6 @@
 
 #include <uv.h>
 
-#include <stdlib.h>
-#include <string.h>
-
 struct cas_evnt {
 	uv_loop_t loop;
 	uv_signal_t signal;

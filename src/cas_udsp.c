@@ -1,8 +1,5 @@
 #include "cas_udsp.h"
-#include "cas_config.h"
-
-#include <stdlib.h>
-#include <string.h>
+#include "cas_utils.h"
 
 cas_udsp_request_t cas_udsp_request_tables[CAS_UDSP_CMD_LAST] = {
 	[CAS_UDSP_CMD_STOP] = {.method = "POST", .path = "/actuator/stop"},

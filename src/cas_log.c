@@ -1,12 +1,8 @@
 #include "cas_log.h"
-#include "cas_config.h"
-#include "cas_utils.h"
 
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdarg.h>
-#include <stddef.h>
-#include <string.h>
 #include <time.h>
 
 #define CAS_LOG_CATEGORY_NAME_SIZE			4
@@ -39,19 +35,17 @@ static void cas_log_unlock(cas_log_t *log)
 	(void)pthread_mutex_unlock(&log->mutex);
 }
 
-static char cas_log_level_char(uint8_t level)
+static char cas_log_level_char(uint8_t lvl)
 {
-	static const char level_chars[] = {'E', 'W', 'I', 'D', 'T'};
+	static const char char_tbl[] = {'E', 'W', 'I', 'D', 'T'};
 
-	if (level > CAS_LOG_LEVEL_TRACE) {
-		return 'N';
+	if (lvl < cas_countof(char_tbl)) {
+		return char_tbl[lvl];
 	}
-
-	return level_chars[level];
+	return 'N';
 }
 
-static size_t cas_log_format_prefix(char *buffer, size_t size, uint8_t level,
-									const char name[CAS_LOG_CATEGORY_NAME_SIZE])
+static size_t cas_log_format_prefix(char *buf, size_t size, uint8_t level, const char *name)
 {
 	struct timespec ts = {0};
 	struct tm tm = {0};
@@ -60,7 +54,7 @@ static size_t cas_log_format_prefix(char *buffer, size_t size, uint8_t level,
 		return 0;
 	}
 
-	size_t len = strftime(buffer, size, "%Y-%m-%dT%H:%M:%S", &tm);
+	size_t len = strftime(buf, size, "%Y-%m-%dT%H:%M:%S", &tm);
 	if (len == 0 || len >= size) {
 		return 0;
 	}
@@ -69,14 +63,12 @@ static size_t cas_log_format_prefix(char *buffer, size_t size, uint8_t level,
 		return 0;
 	}
 	long ms = ts.tv_nsec / CAS_LOG_NANOSECONDS_PER_MILLISECOND;
-	buffer[len] = '.';
-	buffer[len + 1] = (char)('0' + (ms / CAS_LOG_MILLISECONDS_HUNDREDS));
-	buffer[len + 2] = (char)('0' + ((ms / CAS_LOG_DECIMAL_BASE) % CAS_LOG_DECIMAL_BASE));
-	buffer[len + 3] = (char)('0' + (ms % CAS_LOG_DECIMAL_BASE));
-	len += CAS_LOG_MILLISECONDS_DIGITS + 1;
-	buffer[len] = '\0';
+	buf[len++] = '.';
+	buf[len++] = (char)('0' + (ms / CAS_LOG_MILLISECONDS_HUNDREDS));
+	buf[len++] = (char)('0' + ((ms / CAS_LOG_DECIMAL_BASE) % CAS_LOG_DECIMAL_BASE));
+	buf[len++] = (char)('0' + (ms % CAS_LOG_DECIMAL_BASE));
 
-	len += strftime(buffer + len, size - len, "%z", &tm);
+	len += strftime(buf + len, size - len, "%z", &tm);
 	if (len >= size) {
 		return 0;
 	}
@@ -84,68 +76,60 @@ static size_t cas_log_format_prefix(char *buffer, size_t size, uint8_t level,
 	if (size - len <= CAS_LOG_CATEGORY_NAME_SIZE + CAS_LOG_PREFIX_SUFFIX_SIZE) {
 		return 0;
 	}
-	buffer[len++] = ' ';
-	buffer[len++] = cas_log_level_char(level);
-	buffer[len++] = '/';
-	(void)memcpy(buffer + len, name, CAS_LOG_CATEGORY_NAME_SIZE);
+	buf[len++] = ' ';
+	buf[len++] = cas_log_level_char(level);
+	buf[len++] = '/';
+	(void)memcpy(buf + len, name, CAS_LOG_CATEGORY_NAME_SIZE);
 	len += CAS_LOG_CATEGORY_NAME_SIZE;
-	buffer[len++] = ' ';
-	buffer[len++] = '-';
-	buffer[len++] = ' ';
-	buffer[len] = '\0';
+	buf[len++] = ' ';
+	buf[len++] = '-';
+	buf[len++] = ' ';
+	buf[len] = '\0';
 
 	return len;
 }
 
 cas_log_t *cas_log_create(FILE *out, uint8_t level)
 {
-	if (out == NULL || level > CAS_LOG_LEVEL_TRACE) {
-		return NULL;
-	}
+	assert(out != NULL);
+	assert(level <= CAS_LOG_LEVEL_TRACE);
 
 	cas_log_t *log = cas_alloc(sizeof(*log));
-	if (log == NULL) {
-		return NULL;
+	if (log != NULL) {
+		log->out = out;
+		atomic_init(&log->level, level);
+		log->categories = NULL;
+		if (pthread_mutex_init(&log->mutex, NULL) != 0) {
+			cas_free(log);
+			log = NULL;
+		}
 	}
-
-	log->out = out;
-	atomic_init(&log->level, level);
-	log->categories = NULL;
-	if (pthread_mutex_init(&log->mutex, NULL) != 0) {
-		cas_free(log);
-		return NULL;
-	}
-
 	return log;
 }
 
 void cas_log_release(cas_log_t **log)
 {
-	if (log == NULL || *log == NULL) {
-		return;
-	}
+	if (log != NULL && *log != NULL) {
+		for (cas_log_category_t *p = (*log)->categories; p != NULL;) {
+			cas_log_category_t *next = p->next;
+			cas_free(p);
+			p = next;
+		}
 
-	for (cas_log_category_t *category = (*log)->categories; category != NULL;) {
-		cas_log_category_t *next = category->next;
-		cas_free(category);
-		category = next;
+		(void)pthread_mutex_destroy(&(*log)->mutex);
+		cas_free(*log);
+		*log = NULL;
 	}
-
-	(void)pthread_mutex_destroy(&(*log)->mutex);
-	cas_free(*log);
-	*log = NULL;
 }
 
 cas_log_category_t *cas_log_get_category(cas_log_t *log, const char *name)
 {
+	assert(log != NULL);
+	assert(name != NULL);
+
 	char cat_name[CAS_LOG_CATEGORY_NAME_SIZE];
-	size_t idx = 0;
-
-	if (log == NULL || name == NULL) {
-		return NULL;
-	}
-
 	(void)memset(cat_name, ' ', sizeof(cat_name));
+	size_t idx = 0;
 	while (idx < sizeof(cat_name) && name[idx] != '\0') {
 		cat_name[idx] = name[idx];
 		idx++;
@@ -181,8 +165,6 @@ cas_log_category_t *cas_log_get_category(cas_log_t *log, const char *name)
 
 void cas_log_output(cas_log_category_t *c, uint8_t level, const char *format, ...)
 {
-	char msg[CAS_LOG_BUFFER_SIZE];
-
 	if (c == NULL || format == NULL) {
 		return;
 	}
@@ -192,6 +174,7 @@ void cas_log_output(cas_log_category_t *c, uint8_t level, const char *format, ..
 		return;
 	}
 
+	char msg[CAS_LOG_BUF_SIZE];
 	uint8_t max = (uint8_t)atomic_load_explicit(&log->level, memory_order_relaxed);
 	if (level <= CAS_LOG_LEVEL_TRACE && level > max) {
 		return;
@@ -224,9 +207,8 @@ void cas_log_output(cas_log_category_t *c, uint8_t level, const char *format, ..
 		msg[sizeof(msg) - 1] = '\0';
 		len = sizeof(msg) - 1;
 	} else if (msg[len - 1] != '\n') {
-		msg[len] = '\n';
-		msg[len + 1] = '\0';
-		len++;
+		msg[len++] = '\n';
+		msg[len] = '\0';
 	}
 
 	if (cas_log_lock(log)) {

@@ -1,7 +1,7 @@
 #ifndef CAS_UDSP_H
 #define CAS_UDSP_H
 
-#include <stdbool.h>
+#include "cas_cfg.h"
 
 #include <cJSON.h>
 

@@ -1,14 +1,8 @@
 #ifndef CAS_LOG_H
 #define CAS_LOG_H
 
-#include <stdint.h>
+#include "cas_utils.h"
 #include <stdio.h>
-
-#if defined(__GNUC__) || defined(__clang__)
-#define CAS_PRINTF_FORMAT(format_index, first_arg_index) __attribute__((format(printf, format_index, first_arg_index)))
-#else
-#define CAS_PRINTF_FORMAT(format_index, first_arg_index)
-#endif
 
 #define CAS_LOG_LEVEL_ERROR ((uint8_t)0)
 #define CAS_LOG_LEVEL_WARN	((uint8_t)1)
@@ -29,7 +23,5 @@ void cas_log_output(cas_log_category_t *c, uint8_t level, const char *format, ..
 #define cas_log_info(c, ...)  cas_log_output((c), CAS_LOG_LEVEL_INFO, __VA_ARGS__)
 #define cas_log_debug(c, ...) cas_log_output((c), CAS_LOG_LEVEL_DEBUG, __VA_ARGS__)
 #define cas_log_trace(c, ...) cas_log_output((c), CAS_LOG_LEVEL_TRACE, __VA_ARGS__)
-
-#undef CAS_PRINTF_FORMAT
 
 #endif

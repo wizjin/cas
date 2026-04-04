@@ -47,7 +47,7 @@
 - Use `CAS_` or `cas_` as the prefix for code files, functions, macros, and related symbols when applicable.
 - Prefer minimal public interfaces. Expose types, fields, and replaceable hooks only when the requirement clearly needs them.
 - Prefer struct typedef aliases, but do not hide pointer semantics in them. Use explicit `*` in APIs.
-- Keep project configuration macros in `src/cas_config.h` when they are consumed by internal source files.
+- Keep project configuration macros in `src/cas_cfg.h` when they are consumed by internal source files.
 - Use a single canonical configuration access path for internal runtime settings. Avoid passing the same config value through multiple internal layers when a shared accessor already exists.
 - Prefer self-explanatory names and avoid comments unless they prevent real ambiguity.
 - Prefer short, conventional C local variable names only when they remain self-explanatory in context.

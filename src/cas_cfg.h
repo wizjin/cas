@@ -1,18 +1,20 @@
-#ifndef CAS_CONFIG_H
-#define CAS_CONFIG_H
+#ifndef CAS_CFG_H
+#define CAS_CFG_H
 
+#include <stdint.h>
+#include <stdbool.h>
 #include <paths.h>
 
 #ifndef CAS_VERSION
 #define CAS_VERSION "0.1.0"
 #endif
 
-#ifndef CAS_GIT_SHORT_COMMIT
-#define CAS_GIT_SHORT_COMMIT "unknown"
+#ifndef CAS_GIT_COMMIT
+#define CAS_GIT_COMMIT "unknown"
 #endif
 
-#ifndef CAS_BUILD_TIMESTAMP
-#define CAS_BUILD_TIMESTAMP "unknown"
+#ifndef CAS_BUILD_DATETIME
+#define CAS_BUILD_DATETIME "unknown"
 #endif
 
 #ifndef CAS_TARGET_OS
@@ -23,8 +25,8 @@
 #define CAS_TARGET_ARCH "unknown"
 #endif
 
-#ifndef CAS_LOG_BUFFER_SIZE
-#define CAS_LOG_BUFFER_SIZE 1024
+#ifndef CAS_LOG_BUF_SIZE
+#define CAS_LOG_BUF_SIZE 1024
 #endif
 
 #define CAS_UDS_SOCKET_ENV "CAS_UDS_SOCKET_PATH"

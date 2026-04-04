@@ -1,11 +1,7 @@
 #include "cas_ver.h"
-#include "cas_config.h"
 #include "cas_utils.h"
 
 #include <limits.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -139,7 +135,7 @@ int cas_ver_show_details(const cas_cli_t *cli)
 				"Built:        %s\n"
 				"OS/Arch:      %s/%s\n"
 				"Dependencies:\n",
-				CAS_VERSION, CAS_GIT_SHORT_COMMIT, CAS_BUILD_TIMESTAMP, CAS_TARGET_OS, CAS_TARGET_ARCH);
+				CAS_VERSION, CAS_GIT_COMMIT, CAS_BUILD_DATETIME, CAS_TARGET_OS, CAS_TARGET_ARCH);
 
 	size_t count = 0;
 	FILE *fp = cas_ver_maps_file_open_fn("/proc/self/maps", "r");

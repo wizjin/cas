@@ -16,8 +16,9 @@ Back to `doc/index.md`.
 ## Implementation
 
 - Keep subcommand dispatch in `src/cas_cli.h` and `src/cas_cli.c`.
-- Keep configuration macros in `src/cas_config.h`.
+- Keep configuration macros in `src/cas_cfg.h`.
 - Use `CAS_VERSION` as the version macro.
+- Use `CAS_GIT_COMMIT` and `CAS_BUILD_DATETIME` for version output build metadata.
 - Keep the help output command list aligned with the command table.
 - Use a command table with structs and function pointers for dispatch.
 - Keep command output deterministic for unit tests.

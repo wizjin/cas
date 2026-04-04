@@ -188,12 +188,9 @@ static void cas_log_create_and_release_manage_handle(void **state)
 	assert_int_equal(fclose(stream), 0);
 }
 
-static void cas_log_create_rejects_invalid_inputs(void **state)
+static void cas_log_create_handles_alloc_and_mutex_init_failures(void **state)
 {
 	(void)state;
-
-	assert_null(cas_log_create(NULL, CAS_LOG_LEVEL_INFO));
-	assert_null(cas_log_create(stdout, (uint8_t)99));
 
 	cas_test_wrap_malloc = 1;
 	will_return(__wrap_malloc, (uintptr_t)NULL);
@@ -272,25 +269,6 @@ static void cas_log_get_category_normalizes_name_to_fixed_width(void **state)
 	assert_non_null(long_name);
 	assert_ptr_equal(long_name, long_name_again);
 	assert_memory_equal(long_name->name, "trac", 4);
-
-	cas_log_release(&log);
-	assert_int_equal(fclose(stream), 0);
-}
-
-static void cas_log_get_category_rejects_invalid_inputs(void **state)
-{
-	FILE *stream;
-	cas_log_t *log;
-
-	(void)state;
-
-	stream = tmpfile();
-	assert_non_null(stream);
-	log = cas_log_create(stream, CAS_LOG_LEVEL_INFO);
-	assert_non_null(log);
-
-	assert_null(cas_log_get_category(NULL, "core"));
-	assert_null(cas_log_get_category(log, NULL));
 
 	cas_log_release(&log);
 	assert_int_equal(fclose(stream), 0);
@@ -758,12 +736,12 @@ int main(void)
 {
 	const struct CMUnitTest cas_tests[] = {
 		cmocka_unit_test_setup_teardown(cas_log_create_and_release_manage_handle, cas_test_setup, cas_test_teardown),
-		cmocka_unit_test_setup_teardown(cas_log_create_rejects_invalid_inputs, cas_test_setup, cas_test_teardown),
+		cmocka_unit_test_setup_teardown(cas_log_create_handles_alloc_and_mutex_init_failures, cas_test_setup,
+										cas_test_teardown),
 		cmocka_unit_test_setup_teardown(cas_log_release_ignores_null_inputs, cas_test_setup, cas_test_teardown),
 		cmocka_unit_test_setup_teardown(cas_log_get_category_reuses_existing_name, cas_test_setup, cas_test_teardown),
 		cmocka_unit_test_setup_teardown(cas_log_get_category_normalizes_name_to_fixed_width, cas_test_setup,
 										cas_test_teardown),
-		cmocka_unit_test_setup_teardown(cas_log_get_category_rejects_invalid_inputs, cas_test_setup, cas_test_teardown),
 		cmocka_unit_test_setup_teardown(cas_log_get_category_handles_lock_and_alloc_failures, cas_test_setup,
 										cas_test_teardown),
 		cmocka_unit_test_setup_teardown(cas_log_output_writes_expected_format, cas_test_setup, cas_test_teardown),

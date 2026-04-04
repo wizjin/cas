@@ -8,11 +8,6 @@
 #include <llhttp.h>
 #include <uv.h>
 
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 typedef struct cas_udss_handler cas_udss_handler_t;
 typedef struct {
 	const char *method;

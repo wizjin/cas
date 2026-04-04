@@ -10,10 +10,7 @@
 #include <unistd.h>
 
 #include <errno.h>
-#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #ifndef SUN_LEN
 #define SUN_LEN(ptr) ((size_t)offsetof(struct sockaddr_un, sun_path) + strlen((ptr)->sun_path) + 1U)

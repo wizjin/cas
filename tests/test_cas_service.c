@@ -10,7 +10,7 @@
 
 #include "cas_acts.h"
 #include "cas_cli.h"
-#include "cas_config.h"
+#include "cas_cfg.h"
 #include "cas_core.h"
 #include "cas_ctrl.h"
 #include "cas_udsc.h"

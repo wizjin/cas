@@ -3,17 +3,13 @@
 #include "cas_utils.h"
 #include "cas_ver.h"
 
-#include <stddef.h>
-#include <string.h>
-#include <assert.h>
+#define CAS_CLI_CMD_WIDTH ((int)(sizeof("version") - 1))
 
 typedef struct {
 	const char *name;
 	const char *desc;
 	int (*exec)(const cas_cli_t *cli);
 } cas_cli_cmd_t;
-
-#define CAS_CLI_CMD_WIDTH ((int)(sizeof("version") - 1))
 
 static int cas_cli_show_help(const cas_cli_t *cli);
 

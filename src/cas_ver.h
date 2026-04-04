@@ -1,13 +1,10 @@
 #ifndef CAS_VER_H
 #define CAS_VER_H
 
-#include <stddef.h>
-#include <stdio.h>
-
 #include "cas_cli.h"
 
-#define CAS_VER_DEP_NAME_SIZE	16
-#define CAS_VER_DEP_VER_SIZE	64
+#define CAS_VER_DEP_NAME_SIZE 16
+#define CAS_VER_DEP_VER_SIZE  64
 
 typedef struct {
 	char name[CAS_VER_DEP_NAME_SIZE];

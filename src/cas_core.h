@@ -4,9 +4,6 @@
 #include "cas_evnt.h"
 #include "cas_log.h"
 
-#include <stdio.h>
-#include <stdbool.h>
-
 typedef struct cas_udss cas_udss_t;
 
 typedef enum {

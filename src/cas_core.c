@@ -10,8 +10,6 @@
 
 #include <signal.h>
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
 
 static void cas_core_signal_stop(void *ctx)
 {

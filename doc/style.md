@@ -25,11 +25,13 @@ Back to `doc/index.md`.
 - Place feature-test macros through CMake target definitions instead of source-file preprocessor blocks when possible.
 - Add a compiler-format attribute wrapper on printf-style variadic APIs so static analyzers can validate format and `va_list` usage.
 - Do not use `goto`.
+- Keep shared internal configuration macros in `src/cas_cfg.h`.
 
 ## Naming
 
 - Use `CAS_` or `cas_` prefixes for code files, functions, macros, and related symbols when applicable.
 - Prefer self-explanatory names over comments.
+- Use `CAS_LOG_BUF_SIZE` as the log message buffer size macro.
 - Normalize log category names to exactly four characters in `cas_log_get_category()`: truncate longer names and pad shorter names with spaces. Keep `cas_log_format_prefix()` focused on fixed-width formatting only.
 
 ## Comments And Design

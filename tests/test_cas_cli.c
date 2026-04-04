@@ -8,7 +8,7 @@
 #include <cmocka.h>
 
 #include "cas_cli.h"
-#include "cas_config.h"
+#include "cas_cfg.h"
 #include "cas_udsp.h"
 #include "cas_ver.h"
 #include "cas_utils.h"
@@ -131,6 +131,7 @@ static void cas_udsp_socket_path_uses_default_when_env_is_unset(void **state)
 {
 	(void)state;
 
+	cas_test_reset_runtime_hooks();
 	assert_string_equal(cas_udsp_get_skt_path(), CAS_UDS_SKT_DEFAULT_PATH);
 	cas_test_reset_runtime_hooks();
 }
@@ -279,8 +280,8 @@ static void cas_cli_version_subcommand_shows_build_details(void **state)
 
 	assert_int_equal(result, 0);
 	assert_non_null(strstr(output, "Version:      " CAS_VERSION));
-	assert_non_null(strstr(output, "Git Commit:   " CAS_GIT_SHORT_COMMIT));
-	assert_non_null(strstr(output, "Built:        " CAS_BUILD_TIMESTAMP));
+	assert_non_null(strstr(output, "Git Commit:   " CAS_GIT_COMMIT));
+	assert_non_null(strstr(output, "Built:        " CAS_BUILD_DATETIME));
 	assert_non_null(strstr(output, "OS/Arch:      " CAS_TARGET_OS "/" CAS_TARGET_ARCH));
 	assert_non_null(strstr(output, "Dependencies:\n"));
 	assert_true(strstr(output, "  - none") != NULL || strstr(output, "  - jemalloc") != NULL ||

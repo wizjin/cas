@@ -7,7 +7,7 @@
 
 #include <cmocka.h>
 
-#define CAS_LOG_BUFFER_SIZE 39
+#define CAS_LOG_BUF_SIZE 39
 
 #include "cas_log.h"
 #include "cas_utils.h"
@@ -58,7 +58,7 @@ static void cas_log_output_truncates_when_prefix_fills_buffer(void **state)
 	output = cas_test_log_snapshot(stream);
 	length = strlen(output);
 
-	assert_int_equal(length, CAS_LOG_BUFFER_SIZE - 1);
+	assert_int_equal(length, CAS_LOG_BUF_SIZE - 1);
 	assert_int_equal(output[length - 1], '\n');
 	assert_null(strstr(output, "message is ignored"));
 

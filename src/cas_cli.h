@@ -1,6 +1,7 @@
 #ifndef CAS_CLI_H
 #define CAS_CLI_H
 
+#include "cas_cfg.h"
 #include <stdio.h>
 
 typedef struct {
