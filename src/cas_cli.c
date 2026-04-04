@@ -1,85 +1,78 @@
 #include "cas_cli.h"
-#include "cas_config.h"
+#include "cas_ctrl.h"
+#include "cas_utils.h"
+#include "cas_ver.h"
 
-#include <stddef.h>
-#include <string.h>
+#define CAS_CLI_CMD_WIDTH ((int)(sizeof("version") - 1))
 
-typedef struct cas_cli_context cas_cli_context_t;
 typedef struct {
 	const char *name;
-	const char *description;
-	int (*run)(const cas_cli_context_t *context);
-} cas_cli_command_t;
+	const char *desc;
+	int (*exec)(const cas_cli_t *cli);
+} cas_cli_cmd_t;
 
-struct cas_cli_context {
-	const cas_cli_command_t *commands;
-	size_t command_count;
-	FILE *out;
-	FILE *err;
+static int cas_cli_show_help(const cas_cli_t *cli);
+
+static const cas_cli_cmd_t cas_cli_cmds[] = {
+	{"help", "Show this help message.", cas_cli_show_help},
+	{"start", "Start the CAS service.", cas_ctrl_start},
+	{"status", "Show the CAS service status.", cas_ctrl_status},
+	{"stop", "Stop the CAS service.", cas_ctrl_stop},
+	{"version", "Show detailed build information.", cas_ver_show_details},
 };
 
-static int cas_cli_run_help(const cas_cli_context_t *context);
-static int cas_cli_run_version(const cas_cli_context_t *context);
-
-static const cas_cli_command_t cas_cli_commands[] = {
-	{"help", "Show this help message.", cas_cli_run_help},
-	{"version", "Show the CAS version.", cas_cli_run_version},
-};
-
-static const cas_cli_command_t *cas_cli_find_command(const char *name)
+static const cas_cli_cmd_t *cas_cli_find_cmd(const char *name)
 {
-	size_t index;
-
-	for(index = 0; index < sizeof(cas_cli_commands) / sizeof(cas_cli_commands[0]); index++) {
-		if(strcmp(cas_cli_commands[index].name, name) == 0) {
-			return &cas_cli_commands[index];
+	for (int i = 0; i < cas_countof(cas_cli_cmds); i++) {
+		if (strcmp(cas_cli_cmds[i].name, name) == 0) {
+			return cas_cli_cmds + i;
 		}
 	}
 
 	return NULL;
 }
 
-static int cas_cli_run_help(const cas_cli_context_t *context)
+static int cas_cli_show_help(const cas_cli_t *cli)
 {
-	size_t index;
-
-	fprintf(context->out, "Usage: cas <command>\n\n");
-	fprintf(context->out, "Commands:\n");
-	for(index = 0; index < context->command_count; index++) {
-		fprintf(context->out, "  %s\t%s\n", context->commands[index].name,
-			context->commands[index].description);
+	assert(cli != NULL);
+	cas_cli_out(cli, "AI agent system.\n\n"
+					 "Usage:\n"
+					 "  cas [options] [command]\n\n"
+					 "Commands:\n");
+	for (int i = 0; i < cas_countof(cas_cli_cmds); i++) {
+		cas_cli_out(cli, "  %-*s  %s\n", CAS_CLI_CMD_WIDTH, cas_cli_cmds[i].name, cas_cli_cmds[i].desc);
 	}
-
+	cas_cli_out(cli, "\n"
+					 "Options:\n"
+					 "  -h, --help    Show this help message.\n"
+					 "  -v, --version Show detailed build information.\n");
 	return 0;
 }
 
-static int cas_cli_run_version(const cas_cli_context_t *context)
+int cas_cli_run(const cas_cli_t *cli)
 {
-	fprintf(context->out, "%s\n", CAS_VERSION);
-
-	return 0;
-}
-
-int cas_cli_run(int argc, char **argv, FILE *out, FILE *err)
-{
-	cas_cli_context_t context;
-	const cas_cli_command_t *command;
-
-	context.commands = cas_cli_commands;
-	context.command_count = sizeof(cas_cli_commands) / sizeof(cas_cli_commands[0]);
-	context.out = out;
-	context.err = err;
-
-	if(argc < 2) {
-		return cas_cli_run_help(&context);
+	assert(cli != NULL);
+	if (cli->argc < 2) {
+		return cas_cli_show_help(cli);
 	}
 
-	command = cas_cli_find_command(argv[1]);
-	if(command == NULL) {
-		fprintf(context.err, "Unknown command: %s\n", argv[1]);
-		fprintf(context.err, "Run 'cas help' to see available commands.\n");
+	const char *c = cli->argv[1];
+	if (strcmp(c, "--help") == 0 || strcmp(c, "-h") == 0) {
+		return cas_cli_show_help(cli);
+	}
+
+	if (strcmp(c, "--version") == 0 || strcmp(c, "-v") == 0) {
+		return cas_ver_show_short(cli);
+	}
+
+	const cas_cli_cmd_t *cmd = cas_cli_find_cmd(c);
+	if (cmd == NULL) {
+		cas_cli_err(cli,
+					"Unknown command: %s\n"
+					"Run 'cas help' to see available commands.\n",
+					c);
 		return 1;
 	}
 
-	return command->run(&context);
+	return cmd->exec(cli);
 }

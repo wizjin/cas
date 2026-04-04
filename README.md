@@ -2,42 +2,57 @@
 
 CAS is an AI agent system implemented in C.
 
-## Overview
+## Install
 
-The project targets a modular, low-coupling architecture for LLM-driven agent workflows. The repository uses CMake for builds and a root `Makefile` for common developer commands.
+Install a packaged binary when available. If no package is available for your platform, build CAS from source.
 
-## Prerequisites
+## Build From Source
 
 - C17-compatible compiler
-- CMake
+- CMake 3.21 or newer
 - Make
-- clang-format
-- clang-tidy
-- cmocka
 
-## Build And Development
+Dependencies:
 
-Use the root `Makefile` as the main entrypoint:
+- `jemalloc` when available
+- `libuv` 1.51.0
+- `llhttp` 9.3.0
+- `cJSON` 1.7.19
+
+CAS prefers system libraries. Missing `libuv`, `llhttp`, or `cJSON` will be fetched automatically by CMake into `libs/`.
+
+Build:
 
 ```sh
-make clean
 make build
-make format
-make tidy
 make test
-make coverage
 make release
 ```
 
-Release artifacts are expected under `build/release/`.
+- debug build: `build/debug/`
+- release build: `build/release/`
 
-## Dependencies
+## Run CAS
 
-The project prefers system-installed third-party libraries. If a required dependency is unavailable, CMake may fetch it with `FetchContent` and store the fetched source under `libs/`.
+After installation or build:
 
-## Additional Documentation
+```sh
+cas help
+cas --version
+cas version
+```
 
-Repository automation and LLM-oriented rules are defined in `AGENTS.md` and the files under `doc/`.
+- `cas --version` prints the short semantic version such as `0.1.0`
+- `cas version` prints build information
+
+Other commands:
+
+```sh
+make clean
+make format
+make tidy
+make coverage
+```
 
 ## License
 

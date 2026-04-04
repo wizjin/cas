@@ -2,5 +2,11 @@
 
 int main(int argc, char **argv)
 {
-	return cas_cli_run(argc, argv, stdout, stderr);
+	const cas_cli_t ctx = {
+		.out = stdout,
+		.err = stderr,
+		.argc = argc,
+		.argv = argv,
+	};
+	return cas_cli_run(&ctx);
 }

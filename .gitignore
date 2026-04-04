@@ -51,3 +51,6 @@ cmake-build-*
 Testing
 build/
 libs/
+.cas/
+.codex
+*.gcov

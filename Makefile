@@ -5,51 +5,57 @@
 CMAKE ?= cmake
 CTEST ?= ctest
 BUILD_DIR := build/debug
+COVERAGE_DIR := build/coverage
 RELEASE_DIR := build/release
-CMAKE_CONFIGURE := $(CMAKE) --log-level=NOTICE
+CMAKE_CONFIGURE := $(CMAKE) -Wno-deprecated --log-level=NOTICE
 CMAKE_BUILD := $(CMAKE) --build
+PATH_FILTER_SCRIPT := sed -E "s|$(CURDIR)/||g; s|-- Build files have been written to: .*build/|-- Build files have been written to: build/|g"
+BUILD_PROGRESS_FILTER := awk "!/^\[[[:space:]]*[0-9]+%\] (Building|Linking|Built target)/ && !/^Built target / && !/^-- Configuring done/ && !/^-- Generating done/ && !/^-- Build files have been written to:/"
+CTEST_OUTPUT_FILTER := awk "!/^Internal ctest changing into directory:/ && !/^Test project / && !/^    Start [0-9]+:/ && !/^[0-9]+\/[0-9]+ Test \#[0-9]+: .* Passed/ && !/^100% tests passed/ && !/^Total Test time \\(real\\) =/"
 
 clean:
 	echo "Cleaning build directory"
 	test ! -d build || find build -type f -delete
 	test ! -d build || find build -depth -type d -empty -delete
+	echo "Cleaning legacy FetchContent build state"
+	test ! -d libs || find libs -maxdepth 1 \( -name '*-build' -o -name '*-subbuild' \) -type d -exec rm -rf {} +
 
 build:
 	echo "Configuring debug build"
-	$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON
+	bash -o pipefail -c '$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON -DCMAKE_RULE_MESSAGES=OFF 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Building debug targets"
-	$(CMAKE_BUILD) $(BUILD_DIR) -- -s
+	bash -o pipefail -c '$(CMAKE_BUILD) $(BUILD_DIR) -- -s 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 
 format:
 	echo "Configuring format target"
-	$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON
+	bash -o pipefail -c '$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON -DCMAKE_RULE_MESSAGES=OFF 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Running clang-format"
-	$(CMAKE_BUILD) $(BUILD_DIR) --target cas_format -- -s
+	bash -o pipefail -c '$(CMAKE_BUILD) $(BUILD_DIR) --target cas_format -- -s 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 
 tidy:
 	echo "Configuring tidy target"
-	$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON
+	bash -o pipefail -c '$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON -DCMAKE_RULE_MESSAGES=OFF 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Running clang-tidy on src/ and include/"
-	$(CMAKE_BUILD) $(BUILD_DIR) --target cas_tidy -- -s
+	bash -o pipefail -c '$(CMAKE_BUILD) $(BUILD_DIR) --target cas_tidy -- -s 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 
 test:
 	echo "Configuring test build"
-	$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON
+	bash -o pipefail -c '$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON -DCMAKE_RULE_MESSAGES=OFF 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Building tests"
-	$(CMAKE_BUILD) $(BUILD_DIR) -- -s
+	bash -o pipefail -c '$(CMAKE_BUILD) $(BUILD_DIR) -- -s 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Running tests"
-	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure --quiet
+	bash -o pipefail -c '$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure 2>&1 | $(PATH_FILTER_SCRIPT) | $(CTEST_OUTPUT_FILTER)'
 
 coverage:
 	echo "Configuring coverage build"
-	$(CMAKE_CONFIGURE) -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON -DCAS_ENABLE_COVERAGE=ON
+	bash -o pipefail -c '$(CMAKE_CONFIGURE) -S . -B $(COVERAGE_DIR) -DCMAKE_BUILD_TYPE=Debug -DCAS_ENABLE_TESTS=ON -DCAS_ENABLE_COVERAGE=ON -DCMAKE_RULE_MESSAGES=OFF 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Building coverage targets"
-	$(CMAKE_BUILD) $(BUILD_DIR) -- -s
+	bash -o pipefail -c '$(CMAKE_BUILD) $(COVERAGE_DIR) -- -s 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Running coverage"
-	$(CMAKE_BUILD) $(BUILD_DIR) --target cas_coverage -- -s
+	bash -o pipefail -c '$(CMAKE_BUILD) $(COVERAGE_DIR) --target cas_coverage -- -s 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 
 release:
 	echo "Configuring release build"
-	$(CMAKE_CONFIGURE) -S . -B $(RELEASE_DIR) -DCMAKE_BUILD_TYPE=Release -DCAS_ENABLE_TESTS=OFF
+	bash -o pipefail -c '$(CMAKE_CONFIGURE) -S . -B $(RELEASE_DIR) -DCMAKE_BUILD_TYPE=Release -DCAS_ENABLE_TESTS=OFF -DCMAKE_RULE_MESSAGES=OFF 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
 	echo "Building release targets"
-	$(CMAKE_BUILD) $(RELEASE_DIR) -- -s
+	bash -o pipefail -c '$(CMAKE_BUILD) $(RELEASE_DIR) -- -s 2>&1 | $(PATH_FILTER_SCRIPT) | $(BUILD_PROGRESS_FILTER)'
